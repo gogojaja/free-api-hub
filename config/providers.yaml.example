@@ -1,0 +1,39 @@
+# Free API Hub 提供商配置示例
+# 复制本文件为 providers.yaml 并填入你的 API Key
+
+gateway:
+  port: 5080
+  retry_seconds: 60  # 提供商失败后等待秒数再重试
+
+providers:
+  - name: openrouter
+    display: OpenRouter
+    endpoint: https://openrouter.ai/api/v1
+    model: deepseek/deepseek-v4-flash:free
+    priority: 1
+    api_key: YOUR_OPENROUTER_API_KEY
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub
+
+  - name: zhipu
+    display: 智谱AI
+    endpoint: https://open.bigmodel.cn/api/paas/v4
+    model: glm-4-flash
+    priority: 2
+    api_key: YOUR_ZHIPU_API_KEY
+
+  - name: siliconflow
+    display: 硅基流动
+    endpoint: https://api.siliconflow.cn/v1
+    model: deepseek-ai/DeepSeek-R1
+    priority: 3
+    api_key: YOUR_SILICONFLOW_API_KEY
+
+  - name: volcengine
+    display: 火山引擎
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: YOUR_ENDPOINT_ID
+    priority: 4
+    api_key: YOUR_VOLCENGINE_API_KEY
+    note: 需先在 console.volcengine.com 创建推理接入点
