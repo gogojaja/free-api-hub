@@ -47,23 +47,56 @@ _load_dotenv()
 
 
 class CircuitBreaker:
-    """熔断器：CLOSED → OPEN → HALF_OPEN → CLOSED
+    """熔断器：CLOSED → OPEN → HALF_OPEN → CLOSED（失败率熔断，DEGRADE-001）
 
-    状态流转：
-      CLOSED    — 正常，记录失败次数；达到 failure_threshold 后 → OPEN
-      OPEN      — 熔断，拒绝请求；经过 recovery_timeout 后 → HALF_OPEN
-      HALF_OPEN — 探测，放行请求；成功 → CLOSED，失败 → OPEN
+    触发条件（满足其一即 OPEN）：
+      - 连续失败达到 failure_threshold（快速熔断，样本不足时兜底）
+      - 1min 滑动窗口失败率 > failure_rate_threshold（样本 >= min_samples）
+    差异化冷却：429 短冷却(cooldown_429) / 5xx 长冷却(cooldown_5xx)
+    状态流转：CLOSED → OPEN → HALF_OPEN → CLOSED
     """
 
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
 
-    def __init__(self, failure_threshold=3, recovery_timeout=60):
+    def __init__(self, failure_threshold=3, recovery_timeout=60,
+                 failure_rate_threshold=0.25, min_samples=10,
+                 window_seconds=60, cooldown_429=15, cooldown_5xx=60):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
-        self._states = {}  # name -> {state, failure_count, last_failure_ts}
+        self.failure_rate_threshold = failure_rate_threshold
+        self.min_samples = min_samples
+        self.window_seconds = window_seconds
+        self.cooldown_429 = cooldown_429
+        self.cooldown_5xx = cooldown_5xx
+        self._states = {}   # name -> {state, failure_count, last_failure_ts, cooldown}
+        self._samples = {}  # name -> deque[(ts, is_failure)]
         self._lock = threading.Lock()
+
+    def _prune(self, name, now):
+        samples = self._samples.get(name)
+        if not samples:
+            return
+        cutoff = now - self.window_seconds
+        while samples and samples[0][0] <= cutoff:
+            samples.popleft()
+
+    def _failure_rate(self, name, now):
+        """窗口失败率；样本不足 min_samples 时返回 0（避免冷启动误判）"""
+        self._prune(name, now)
+        samples = self._samples.get(name, ())
+        if len(samples) < self.min_samples:
+            return 0.0
+        failures = sum(1 for _, is_fail in samples if is_fail)
+        return failures / len(samples)
+
+    def _cooldown_for(self, error_type):
+        if error_type == "429":
+            return self.cooldown_429
+        if error_type == "5xx":
+            return self.cooldown_5xx
+        return self.recovery_timeout
 
     def _get_state(self, name):
         """获取当前状态（含 OPEN→HALF_OPEN 自动转换）"""
@@ -71,7 +104,8 @@ class CircuitBreaker:
         if not info:
             return self.CLOSED
         if info["state"] == self.OPEN:
-            if time.time() - info["last_failure_ts"] >= self.recovery_timeout:
+            cooldown = info.get("cooldown", self.recovery_timeout)
+            if time.time() - info["last_failure_ts"] >= cooldown:
                 info["state"] = self.HALF_OPEN
                 return self.HALF_OPEN
             return self.OPEN
@@ -89,24 +123,53 @@ class CircuitBreaker:
             return self._get_state(name)
 
     def record_success(self, name):
-        """记录成功：重置为 CLOSED"""
+        """记录成功：写入窗口样本，并按失败率触发熔断（DEGRADE-001）"""
         with self._lock:
-            self._states.pop(name, None)
+            now = time.time()
+            samples = self._samples.setdefault(name, collections.deque())
+            samples.append((now, False))
+            self._prune(name, now)
+            info = self._states.get(name)
+            if info is None:
+                info = {
+                    "state": self.CLOSED,
+                    "failure_count": 0,
+                    "last_failure_ts": 0,
+                    "cooldown": self.recovery_timeout,
+                }
+            if self._failure_rate(name, now) > self.failure_rate_threshold:
+                info["state"] = self.OPEN
+            else:
+                info["state"] = self.CLOSED
+            self._states[name] = info
 
-    def record_failure(self, name):
-        """记录失败：累加计数，可能触发熔断"""
+    def record_failure(self, name, error_type=None):
+        """记录失败：写入窗口样本，可能按失败率触发熔断
+
+        error_type 决定差异化冷却：
+          429 → cooldown_429，5xx → cooldown_5xx，
+          None/其他 → recovery_timeout（保持向后兼容）。
+        """
         with self._lock:
+            now = time.time()
+            samples = self._samples.setdefault(name, collections.deque())
+            samples.append((now, True))
+            self._prune(name, now)
             info = self._states.get(name, {
                 "state": self.CLOSED,
                 "failure_count": 0,
                 "last_failure_ts": 0,
+                "cooldown": self.recovery_timeout,
             })
             info["failure_count"] += 1
-            info["last_failure_ts"] = time.time()
+            info["last_failure_ts"] = now
+            info["cooldown"] = self._cooldown_for(error_type)
             if info["state"] == self.HALF_OPEN:
                 info["state"] = self.OPEN
                 info["failure_count"] = 0
             elif info["failure_count"] >= self.failure_threshold:
+                info["state"] = self.OPEN
+            elif self._failure_rate(name, now) > self.failure_rate_threshold:
                 info["state"] = self.OPEN
             self._states[name] = info
 
@@ -115,8 +178,10 @@ class CircuitBreaker:
         with self._lock:
             if name:
                 self._states.pop(name, None)
+                self._samples.pop(name, None)
             else:
                 self._states.clear()
+                self._samples.clear()
 
     def get_detail(self):
         """获取所有 provider 的熔断状态"""
@@ -127,6 +192,7 @@ class CircuitBreaker:
                 result[name] = {
                     "state": state,
                     "failure_count": info["failure_count"],
+                    "cooldown": info.get("cooldown", self.recovery_timeout),
                 }
             return result
 
@@ -187,6 +253,11 @@ class APIGateway:
         self._breaker = CircuitBreaker(
             failure_threshold=self.gateway_cfg.get("failure_threshold", 3),
             recovery_timeout=self.retry_seconds,
+            failure_rate_threshold=self.gateway_cfg.get("failure_rate_threshold", 0.25),
+            min_samples=self.gateway_cfg.get("failure_min_samples", 10),
+            window_seconds=self.gateway_cfg.get("failure_window_seconds", 60),
+            cooldown_429=self.gateway_cfg.get("cooldown_429", 15),
+            cooldown_5xx=self.gateway_cfg.get("cooldown_5xx", 60),
         )
         try:
             self._config_mtime = self.config_path.stat().st_mtime
@@ -400,8 +471,8 @@ class APIGateway:
             available.append(p)
         return available
 
-    def _mark_failed(self, name):
-        self._breaker.record_failure(name)
+    def _mark_failed(self, name, error_type="5xx"):
+        self._breaker.record_failure(name, error_type=error_type)
         with self._lock:
             u = self.usage.get(name, {})
             u["errors"] = u.get("errors", 0) + 1
@@ -485,7 +556,7 @@ class APIGateway:
 
                     if resp.status_code == 401:
                         logger.warning(f"[{name}] 401 认证错误，不重试")
-                        self._mark_failed(name)
+                        self._mark_failed(name, error_type="401")
                         last_error = f"{name}: 401"
                         last_status = 401
                         break
@@ -496,19 +567,19 @@ class APIGateway:
                             time.sleep(wait)
                             continue
                         logger.warning(f"[{name}] 429 重试耗尽")
-                        self._mark_failed(name)
+                        self._mark_failed(name, error_type="429")
                         last_error = f"{name}: 429"
                         last_status = 429
                         break
                     if resp.status_code >= 500:
                         logger.warning(f"[{name}] {resp.status_code} 服务端错误，不重试")
-                        self._mark_failed(name)
+                        self._mark_failed(name, error_type="5xx")
                         last_error = f"{name}: {resp.status_code}"
                         last_status = resp.status_code
                         break
                     if resp.status_code != 200:
                         logger.warning(f"[{name}] {resp.status_code} 异常")
-                        self._mark_failed(name)
+                        self._mark_failed(name, error_type="5xx")
                         last_error = f"{name}: {resp.status_code}"
                         last_status = resp.status_code
                         break
@@ -537,13 +608,13 @@ class APIGateway:
                         time.sleep(wait)
                         continue
                     logger.warning(f"[{name}] 瞬时错误重试耗尽")
-                    self._mark_failed(name)
+                    self._mark_failed(name, error_type="5xx")
                     last_error = f"{name}: {type(e).__name__}"
                     last_status = 503
                     break
                 except Exception as e:
                     logger.warning(f"[{name}] {e}")
-                    self._mark_failed(name)
+                    self._mark_failed(name, error_type="5xx")
                     last_error = f"{name}: {e}"
                     last_status = 500
                     break
