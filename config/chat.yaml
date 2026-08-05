@@ -1,0 +1,62 @@
+# Free API Hub — 聊天实例配置
+# 通用对话 / 轻量任务
+# 优先使用国内免费提供商，海外 OpenRouter 兜底
+
+gateway:
+  port: 5080
+  retry_seconds: 15
+  timeout: 30
+  log: data/chat.log
+
+providers:
+  - name: zhipu
+    display: 智谱AI
+    endpoint: https://open.bigmodel.cn/api/paas/v4
+    model: glm-4-flash
+    priority: 1
+    api_key: ZHIPU_API_KEY_REPLACED
+
+  - name: volcengine-pro
+    display: 火山引擎 Doubao-Pro
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: ep-20260613101926-l67rn
+    priority: 2
+    api_key: VOLCENGINE_API_KEY_REPLACED
+
+  - name: siliconflow-chat
+    display: 硅基流动 Qwen-Chat
+    endpoint: https://api.siliconflow.cn/v1
+    model: Qwen/Qwen2.5-7B-Instruct
+    priority: 3
+    api_key: CODE_API_KEY_REPLACED
+
+  - name: siliconflow-reason
+    display: 硅基流动 Qwen-Reason
+    endpoint: https://api.siliconflow.cn/v1
+    model: Qwen/Qwen3-32B
+    priority: 4
+    api_key: CODE_API_KEY_REPLACED
+
+  - name: volcengine-lite
+    display: 火山引擎 Doubao-Lite
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: ep-20260613102219-rxrhv
+    priority: 5
+    api_key: VOLCENGINE_API_KEY_REPLACED
+
+  - name: openrouter
+    display: OpenRouter (海外兜底)
+    endpoint: https://openrouter.ai/api/v1
+    model: openrouter/free
+    priority: 6
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub
+
+  - name: bocha
+    display: 博查 (余额不足)
+    endpoint: https://api.bochaai.com/v1
+    model: deepseek-v4-flash
+    priority: 10
+    api_key: CHAT_API_KEY_REPLACED
