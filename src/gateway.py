@@ -10,6 +10,8 @@ import datetime
 import hmac
 import hashlib
 import base64
+import re
+import shutil
 import urllib.parse
 import threading
 import requests
@@ -142,6 +144,7 @@ class APIGateway:
         self.usage_path = DATA_DIR / "usage.json"
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._load_config()
+        self._snapshot_config()
         self._setup_logging()
         self._load_usage()
         self.current_provider = None
@@ -185,6 +188,31 @@ class APIGateway:
         self.gateway_cfg = self.config.get("gateway", {})
         self.retry_seconds = self.gateway_cfg.get("retry_seconds", 60)
         self.request_timeout = self.gateway_cfg.get("timeout", 30)
+
+    def _snapshot_config(self):
+        """配置快照（NEW-004）：启动加载成功后自动备份当前配置，保留最近 10 份
+
+        快照文件：backup/config_v<N>_<name>.yaml
+        异常仅记录日志，不中断服务启动。
+        """
+        try:
+            backup_dir = BASE_DIR / "backup"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            stem = self.config_path.stem
+            pattern = re.compile(rf"^config_v(\d+)_{re.escape(stem)}\.yaml$")
+            existing = sorted(
+                (int(m.group(1)), f) for f in backup_dir.glob(f"config_v*_{stem}.yaml")
+                if (m := pattern.match(f.name))
+            )
+            next_index = (existing[-1][0] + 1) if existing else 1
+            target = backup_dir / f"config_v{next_index}_{stem}.yaml"
+            shutil.copy2(self.config_path, target)
+            logger.info(f"配置快照已保存: {target}")
+            while len(existing) >= 10:
+                _, oldest = existing.pop(0)
+                oldest.unlink()
+        except Exception as e:
+            logger.warning(f"配置快照失败（不影响服务）: {e}")
 
     def _setup_logging(self):
         log_rel = self.gateway_cfg.get("log", "")

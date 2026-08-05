@@ -7,3 +7,4 @@ data/usage.json
 *.log
 .env
 config/*.yaml.local
+backup/config_v*.yaml

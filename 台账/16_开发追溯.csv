@@ -5,4 +5,4 @@ REQ-FAILOVER-003,熔断,FAILOVER-003 渐进恢复 (设计),gateway.py: get_avail
 REQ-RETRY-001,网关,NEW-001 重试+指数退避 (设计),gateway.py: call_api (待实现),—
 REQ-OBS-001,网关,NEW-002 可观测性指标 (设计),server.py: /metrics + gateway.py (待实现),—
 REQ-RATE-001,网关,NEW-003 429 规范化 (设计),server.py (待实现),—
-REQ-CONFIG-004,配置,NEW-004 配置快照 (设计),gateway.py + scripts (待实现),—
+REQ-CONFIG-004,配置,NEW-004 配置快照,gateway.py: _snapshot_config + scripts/backup_config.py,—

@@ -16,3 +16,4 @@
 2026-08-05,M1,update_cost,补录成本基准：<20 人*日,✅
 2026-08-05,M2,analyze_strategy,CHG-REQ-001 架构评估,✅
 2026-08-05,M2,role_reset,重置角色加载【架构设计师】,✅
+2026-08-05,M2,implement,NEW-004 配置快照落地(脚本+gateway._snapshot_config+测试),✅
