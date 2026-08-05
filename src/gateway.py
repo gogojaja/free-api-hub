@@ -188,6 +188,11 @@ class APIGateway:
             failure_threshold=self.gateway_cfg.get("failure_threshold", 3),
             recovery_timeout=self.retry_seconds,
         )
+        try:
+            self._config_mtime = self.config_path.stat().st_mtime
+        except OSError:
+            self._config_mtime = 0
+        self._config_reload_ts = time.time()
 
     @staticmethod
     def _resolve_env(value):
@@ -247,6 +252,37 @@ class APIGateway:
                 oldest.unlink()
         except Exception as e:
             logger.warning(f"配置快照失败（不影响服务）: {e}")
+
+    def _maybe_reload(self):
+        """配置热加载（CONFIG-002）：mtime 检测 + 5s TTL 缓存
+
+        每次调用前检查 config 文件 mtime：
+          - mtime 变化 且 距上次加载 >5s → 重载并自动快照（NEW-004 联动）
+          - 重载失败（YAML 损坏）→ 保留旧配置 + 日志告警，服务不中断
+        """
+        try:
+            mtime = self.config_path.stat().st_mtime
+        except OSError:
+            return
+        if mtime == self._config_mtime:
+            return
+        now = time.time()
+        if now - self._config_reload_ts < 5:
+            return
+        old_names = {p["name"] for p in getattr(self, "providers", [])}
+        try:
+            self._load_config()
+            self._config_mtime = mtime
+            self._config_reload_ts = now
+            self._snapshot_config()
+            new_names = {p["name"] for p in self.providers}
+            removed = old_names - new_names
+            for name in removed:
+                self._breaker.reset(name)
+                logger.info(f"配置热加载：移除已删除提供商 [{name}] 的熔断器状态")
+            logger.info(f"配置热加载完成，当前 {len(self.providers)} 个提供商")
+        except Exception as e:
+            logger.warning(f"配置热加载失败（保留旧配置继续服务）: {e}")
 
     def _setup_logging(self):
         log_rel = self.gateway_cfg.get("log", "")
@@ -353,6 +389,7 @@ class APIGateway:
         return bool(p.get("api_key"))
 
     def get_available_providers(self):
+        self._maybe_reload()
         available = []
         for p in self.providers:
             name = p["name"]
@@ -525,6 +562,7 @@ class APIGateway:
         return int(total)
 
     def get_status(self):
+        self._maybe_reload()
         available = self.get_available_providers()
         breaker_detail = self._breaker.get_detail()
         return {
@@ -568,6 +606,7 @@ class APIGateway:
         }
 
     def list_models(self):
+        self._maybe_reload()
         models = []
         for p in self.providers:
             if not self._has_creds(p):
