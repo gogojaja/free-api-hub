@@ -14,6 +14,7 @@ import re
 import shutil
 import urllib.parse
 import threading
+import collections
 import requests
 import yaml
 from pathlib import Path
@@ -134,6 +135,39 @@ class CircuitBreaker:
         with self._lock:
             return [name for name, info in self._states.items()
                     if self._get_state(name) == self.OPEN]
+
+
+class RateLimiter:
+    """滑动窗口限流器（NEW-003）
+
+    以时间戳队列记录窗口内请求，超限拒绝。
+    线程安全；用于网关自身限流并输出规范化 429 头。
+    """
+
+    def __init__(self, limit, window_seconds=60):
+        self.limit = limit
+        self.window_seconds = window_seconds
+        self._timestamps = collections.deque()
+        self._lock = threading.Lock()
+
+    def _prune(self, now):
+        cutoff = now - self.window_seconds
+        while self._timestamps and self._timestamps[0] <= cutoff:
+            self._timestamps.popleft()
+
+    def check(self, now=None):
+        """记录一次请求并返回 (allowed, remaining, reset_ts)
+
+        allowed=True 表示放行；reset_ts 为窗口重置时间戳（Unix 秒）。
+        """
+        now = time.time() if now is None else now
+        with self._lock:
+            self._prune(now)
+            if len(self._timestamps) >= self.limit:
+                reset_ts = int(self._timestamps[0]) + self.window_seconds
+                return False, 0, reset_ts
+            self._timestamps.append(now)
+            return True, self.limit - len(self._timestamps), int(now) + self.window_seconds
 
 
 class APIGateway:
@@ -365,6 +399,7 @@ class APIGateway:
 
         max_retries = self.gateway_cfg.get("retry_attempts", 3)
         last_error = None
+        last_status = None
         for provider in providers:
             name = provider["name"]
             auth_type = provider.get("auth_type", "bearer")
@@ -415,6 +450,7 @@ class APIGateway:
                         logger.warning(f"[{name}] 401 认证错误，不重试")
                         self._mark_failed(name)
                         last_error = f"{name}: 401"
+                        last_status = 401
                         break
                     if resp.status_code == 429:
                         if attempt < max_retries:
@@ -425,16 +461,19 @@ class APIGateway:
                         logger.warning(f"[{name}] 429 重试耗尽")
                         self._mark_failed(name)
                         last_error = f"{name}: 429"
+                        last_status = 429
                         break
                     if resp.status_code >= 500:
                         logger.warning(f"[{name}] {resp.status_code} 服务端错误，不重试")
                         self._mark_failed(name)
                         last_error = f"{name}: {resp.status_code}"
+                        last_status = resp.status_code
                         break
                     if resp.status_code != 200:
                         logger.warning(f"[{name}] {resp.status_code} 异常")
                         self._mark_failed(name)
                         last_error = f"{name}: {resp.status_code}"
+                        last_status = resp.status_code
                         break
 
                     self.current_provider = name
@@ -463,15 +502,20 @@ class APIGateway:
                     logger.warning(f"[{name}] 瞬时错误重试耗尽")
                     self._mark_failed(name)
                     last_error = f"{name}: {type(e).__name__}"
+                    last_status = 503
                     break
                 except Exception as e:
                     logger.warning(f"[{name}] {e}")
                     self._mark_failed(name)
                     last_error = f"{name}: {e}"
+                    last_status = 500
                     break
 
         logger.error(f"全部 API 不可用，最后错误: {last_error}")
-        return {"error": f"所有 API 均不可用: {last_error}"}
+        result = {"error": f"所有 API 均不可用: {last_error}"}
+        if last_status:
+            result["status_code"] = last_status
+        return result
 
     def _estimate_tokens(self, messages):
         total = 0

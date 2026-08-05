@@ -5,13 +5,14 @@ Free API Hub — Flask HTTP 服务
 import os
 import sys
 import json
+import time
 import logging
 import urllib.parse
 from functools import wraps
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from flask import Flask, request, jsonify, Response, stream_with_context
-from gateway import APIGateway, _load_dotenv
+from gateway import APIGateway, RateLimiter, _load_dotenv
 
 _load_dotenv()
 
@@ -21,8 +22,45 @@ app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
 
 gateway = None
+rate_limiter = None
 
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "")
+
+
+def _apply_rate_limit():
+    """网关自身限流（NEW-003）：超限返回规范化 429 + 限流头
+
+    返回 (response_or_None) —— None 表示放行。
+    """
+    if rate_limiter is None:
+        return None
+    allowed, remaining, reset_ts = rate_limiter.check()
+    if allowed:
+        return None
+    body = jsonify({"error": "rate_limit_exceeded",
+                    "message": "请求过于频繁，请稍后重试",
+                    "retry_after": max(1, int(reset_ts - time.time()))})
+    body.status_code = 429
+    body.headers["Retry-After"] = str(max(1, int(reset_ts - time.time())))
+    body.headers["X-RateLimit-Limit"] = str(rate_limiter.limit)
+    body.headers["X-RateLimit-Remaining"] = "0"
+    body.headers["X-RateLimit-Reset"] = str(reset_ts)
+    return body
+
+
+def _error_response(result):
+    """将网关错误响应规范化为 HTTP 状态码 + 429 规范化头（NEW-003）"""
+    status = result.get("status_code", 503)
+    body = jsonify(result)
+    if status == 429:
+        body.status_code = 429
+        body.headers["Retry-After"] = "5"
+        body.headers["X-RateLimit-Limit"] = str(rate_limiter.limit) if rate_limiter else "60"
+        body.headers["X-RateLimit-Remaining"] = "0"
+        body.headers["X-RateLimit-Reset"] = str(int(time.time()) + 5)
+    else:
+        body.status_code = status if 400 <= status < 600 else 503
+    return body
 
 
 def require_auth(f):
@@ -44,6 +82,10 @@ def chat_completions():
     if gateway is None:
         return jsonify({"error": "网关未初始化，请先运行 scripts/setup.sh"}), 503
 
+    limited = _apply_rate_limit()
+    if limited is not None:
+        return limited
+
     try:
         body = request.get_json(force=True)
         if not body or "messages" not in body:
@@ -60,7 +102,7 @@ def chat_completions():
 
         result = gateway.call_api(messages, stream=False, model=model, **kwargs)
         if isinstance(result, dict) and "error" in result:
-            return jsonify(result), 503
+            return _error_response(result)
         if isinstance(result, dict):
             result["provider_name"] = gateway.current_provider
             result["provider_display"] = gateway.current_provider_display
@@ -161,13 +203,20 @@ def health():
 
 
 def run_server(config_path=None):
-    global gateway
+    global gateway, rate_limiter
     try:
         gateway = APIGateway(config_path=config_path)
     except FileNotFoundError as e:
         logger.error(str(e))
         sys.exit(1)
-    port = gateway.gateway_cfg.get("port", 5080)
+    gw_cfg = gateway.gateway_cfg
+    rate_limit = gw_cfg.get("rate_limit", 0)
+    if rate_limit and rate_limit > 0:
+        rate_limiter = RateLimiter(limit=rate_limit, window_seconds=gw_cfg.get("rate_limit_window", 60))
+        logger.info(f"  限流已启用: {rate_limit} req/{gw_cfg.get('rate_limit_window', 60)}s")
+    else:
+        rate_limiter = None
+    port = gw_cfg.get("port", 5080)
     logger.info(f"Free API Hub 启动在 http://127.0.0.1:{port}")
     logger.info(f"  配置: {config_path or 'config/providers.yaml'}")
     logger.info(f"  POST /v1/chat/completions — OpenAI 兼容接口")
