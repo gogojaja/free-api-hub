@@ -1,0 +1,17 @@
+﻿日期,阶段,环节,执行动作,结果
+2026-08-05,M0,init_kickoff,启动登记 PRJ-001,✅
+2026-08-05,M0,create_charter,项目章程,✅
+2026-08-05,M0,register_stakeholder,干系人登记册,✅
+2026-08-05,M0,define_scope_prelim,范围初定义,✅
+2026-08-05,M0,assess_feasibility,五维可行性 Go,✅
+2026-08-05,M0,check_ready,启动就绪 Go,✅
+2026-08-05,M0,init_baseline,台账 17 CSV 初始化 v0.1,✅
+2026-08-05,M1,create_requirements_baseline,创建 requirements/ + 收集清单,✅
+2026-08-05,M1,gather_requirements,17 项需求登记 + 来源映射,✅
+2026-08-05,M1,excel_to_csv,存量 SRS/评审 迁移 15 CSV,✅
+2026-08-05,M1,update_traceability,台账 08 追溯矩阵 29 行,✅
+2026-08-05,M1,change_analysis,需求审视(去3改3增4)行业实践对齐,✅
+2026-08-05,M1,change_audit,CHG-REQ-001 登记,✅
+2026-08-05,M1,register_stakeholder,补录干系人：段波,✅
+2026-08-05,M1,update_cost,补录成本基准：<20 人*日,✅
+2026-08-05,M2,analyze_strategy,CHG-REQ-001 架构评估,✅

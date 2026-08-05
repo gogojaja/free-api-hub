@@ -1,0 +1,30 @@
+﻿需求ID,来源,功能模块,接口,数据,测试用例,设计文档
+REQ-FUNC-API-001,原始需求REQ-01,server.py: chat_completions(),POST /v1/chat/completions,—,"TC-05, TC-06",design.md §3.2
+REQ-FUNC-API-002,原始需求REQ-02,server.py: list_models(),GET /v1/models,—,TC-02,design.md §3.1
+REQ-FUNC-API-003,原始需求REQ-03,gateway.py: _StreamWrapper,SSE流式,—,TC-06,design.md §3.2
+REQ-FAILOVER-001,原始需求REQ-04/05,gateway.py: call_api(),—,failed_providers,TC-05,design.md §3.2
+REQ-FAILOVER-002,原始需求REQ-06,gateway.py: get_available_providers(),—,failed_providers,—,design.md §3.2
+REQ-FAILOVER-003,原始需求REQ-10,gateway.py: reset_failures(),POST /gateway/reset,failed_providers,TC-04,design.md §3.1
+REQ-ROUTE-001,原始需求REQ-12,gateway.py: call_api() model处理,—,Provider配置,"TC-07, TC-08",design.md §3.2
+REQ-CONFIG-001,原始需求REQ-07,gateway.py: _load_config(),—,config/*.yaml,TC-08,design.md §4
+REQ-CONFIG-002,原始需求(非功能-维护),gateway.py: _load_config() (待改造),—,config/*.yaml,—,design.md §4
+REQ-CONFIG-003,安全评审D-S05,gateway.py: _resolve_env() (待实现),—,.env,—,整改方案D-S05
+REQ-CONFIG-004,原始需求REQ-13,server.py: --config参数,—,"config/chat.yaml, code.yaml",—,design.md §1.1
+REQ-TRACK-001,原始需求REQ-08,"gateway.py: _track(), _save_usage()",GET /gateway/status,data/usage.json,TC-03,design.md §3.2
+REQ-TRACK-002,原始需求REQ-09,gateway.py: get_status(),GET /gateway/status,—,TC-03,design.md §3.1
+REQ-HEALTH-001,原始需求REQ-11,server.py: health(),GET /health,—,TC-01,design.md §3.1
+REQ-HEALTH-002,评审D-M04,server.py (待实现),GET /health (待改造),—,—,—
+REQ-SEC-001,安全评审D-S06,server.py: require_auth (待实现),管理端点,—,—,整改方案D-S06
+REQ-SEC-002,安全评审D-M09,gateway.py (待实现),全部端点,—,—,—
+REQ-SEC-003,安全评审D-M10,server.py (待实现),POST端点,—,—,—
+REQ-DEGRADE-001,评审D-S03,gateway.py: CircuitBreaker (待实现),—,—,—,整改方案D-S03
+REQ-DEGRADE-002,评审D-S03,gateway.py (待实现),—,缓存数据,—,整改方案D-S03
+REQ-NFR-PERF-001,ISO/IEC 25010,gateway.py: timeout配置,—,—,—,design.md §4
+REQ-NFR-REL-004,ISO/IEC 25010,gateway.py: retry_seconds,—,failed_providers,—,design.md §4
+REQ-NFR-SEC-001,OWASP API #2,gateway.py: _resolve_env (待实现),—,.env,—,整改方案D-S05
+REQ-NFR-COMP-001,原始需求(兼容),server.py + gateway.py,全部/v1接口,—,"TC-05, TC-06",design.md §5
+REQ-IF-INT-001,config/chat.yaml,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5
+REQ-IF-INT-002,config/code.yaml,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5
+REQ-IF-INT-003,config/chat+code.yaml,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5
+REQ-IF-INT-004,config/code.yaml,gateway.py: call_api() + _sign_v4(),上游HTTPS,Provider配置,—,design.md §5
+REQ-IF-INT-005,原始需求(v3.2),server.py: 响应注入,HTTP响应头/JSON,—,—,design.md §3.3
