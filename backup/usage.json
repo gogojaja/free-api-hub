@@ -1,0 +1,26 @@
+{
+  "openrouter": {
+    "total_requests": 1,
+    "total_tokens": 92,
+    "errors": 18,
+    "last_used": "2026-05-29T13:58:30.325028"
+  },
+  "zhipu": {
+    "total_requests": 20,
+    "total_tokens": 1360,
+    "errors": 11,
+    "last_used": "2026-05-29T13:57:10.044388"
+  },
+  "siliconflow": {
+    "total_requests": 91,
+    "total_tokens": 10499682,
+    "errors": 14,
+    "last_used": "2026-05-29T13:56:26.281803"
+  },
+  "deepseek": {
+    "total_requests": 0,
+    "total_tokens": 0,
+    "errors": 0,
+    "last_used": null
+  }
+}

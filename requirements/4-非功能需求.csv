@@ -1,0 +1,20 @@
+﻿需求规格说明书 (SRS) — 非功能需求 (ISO/IEC 25010),,,,,,,
+需求编号,质量特征,子特征,需求描述,量化指标,验收标准,优先级,状态
+REQ-NFR-PERF-001,性能效率,响应时间,非流式请求从接收到响应的时间,P1 Provider: <5s; P2 Provider: <10s; 超时: 30s(聊天)/15s(编程),90%请求在量化指标内完成,P1,部分实现
+REQ-NFR-PERF-002,性能效率,吞吐量,单位时间处理的请求数,聊天实例: >=10 req/s; 编程实例: >=5 req/s,压力测试达到目标吞吐量,P2,未测试
+REQ-NFR-PERF-003,性能效率,资源利用率,内存和CPU使用,内存<200MB; CPU<10%(空闲时),top命令监控在阈值内,P2,未测试
+REQ-NFR-REL-001,可靠性,成熟性,系统无故障运行能力,MTBF>=24h(单实例),连续运行24h无崩溃,P1,未测试
+REQ-NFR-REL-002,可靠性,可用性,系统可用时间比例,">=99%(本地部署, 单实例)",月度可用时间>=99%,P2,未测试
+REQ-NFR-REL-003,可靠性,容错性,上游Provider故障时的处理能力,单Provider故障不影响整体服务; 全部故障返回结构化错误,P1故障后P2自动接管; 全部故障返回503+错误信息,P0,部分实现
+REQ-NFR-REL-004,可靠性,可恢复性,Provider故障后自动恢复,retry_seconds后自动恢复(聊天15s/编程5s),Provider在retry_seconds后重新可用,P0,已实现
+REQ-NFR-SEC-001,安全性,保密性,API Key不以明文存储在代码库,100% Key通过环境变量注入,grep -r 'sk-' config/ 无结果,P0,待整改
+REQ-NFR-SEC-002,安全性,完整性,管理端点需认证访问,100%管理端点需要Token认证,无Token访问返回401,P0,待整改
+REQ-NFR-SEC-003,安全性,可追溯性,操作日志可追溯,每次请求记录Provider/模型/耗时/状态,日志包含全部必要字段,P1,已实现
+REQ-NFR-MAINT-001,维护性,模块化,代码模块清晰分离,server.py(HTTP层) / gateway.py(业务层) 职责分离,代码审查确认模块边界清晰,P2,已实现
+REQ-NFR-MAINT-002,维护性,可修改性,配置变更不需修改代码,Provider增删改通过YAML配置完成,仅修改YAML即可增删Provider,P1,已实现
+REQ-NFR-MAINT-003,维护性,可测试性,核心功能有自动化测试,回归测试覆盖率>=80%,tests/test_regression.py全通过,P1,部分实现
+REQ-NFR-PORT-001,可移植性,适应性,适配macOS环境,macOS 13+ / Python 3.12+,在macOS上正常启动运行,P1,已实现
+REQ-NFR-PORT-002,可移植性,可安装性,一键部署,scripts/setup.sh完成全部环境搭建,执行setup.sh后服务可启动,P1,已实现
+REQ-NFR-COMP-001,兼容性,互操作性,兼容OpenAI API格式,100%兼容/v1/chat/completions和/v1/models接口,opencode/VSCode可直接连接使用,P0,已实现
+REQ-NFR-COMP-002,兼容性,共存性,双实例可同时运行,chat:5080和code:5081互不干扰,同时启动双实例均可正常服务,P0,已实现
+REQ-NFR-USA-001,易用性,可操作性,启动/停止操作简单,提供start/stop脚本,执行scripts/start.sh启动服务,P1,已实现

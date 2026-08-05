@@ -4,59 +4,32 @@
 
 gateway:
   port: 5080
-  retry_seconds: 15
+  retry_seconds: 15       # 熔断器 OPEN→HALF_OPEN 恢复超时(秒)
+  failure_threshold: 3    # 连续失败次数阈值，达到后熔断
   timeout: 30
   log: data/chat.log
 
 providers:
   - name: zhipu
-    display: 智谱AI
+    display: 智谱 GLM-4.7
     endpoint: https://open.bigmodel.cn/api/paas/v4
-    model: glm-4-flash
+    model: glm-4.7
     priority: 1
-    api_key: ZHIPU_API_KEY_REPLACED
+    api_key: ${ZHIPU_API_KEY}
 
-  - name: volcengine-pro
-    display: 火山引擎 Doubao-Pro
-    endpoint: https://ark.cn-beijing.volces.com/api/v3
-    model: ep-20260613101926-l67rn
+  - name: zhipu-fast
+    display: 智谱 GLM-4.5-Air (快速)
+    endpoint: https://open.bigmodel.cn/api/paas/v4
+    model: glm-4.5-air
     priority: 2
-    api_key: VOLCENGINE_API_KEY_REPLACED
-
-  - name: siliconflow-chat
-    display: 硅基流动 Qwen-Chat
-    endpoint: https://api.siliconflow.cn/v1
-    model: Qwen/Qwen2.5-7B-Instruct
-    priority: 3
-    api_key: CODE_API_KEY_REPLACED
-
-  - name: siliconflow-reason
-    display: 硅基流动 Qwen-Reason
-    endpoint: https://api.siliconflow.cn/v1
-    model: Qwen/Qwen3-32B
-    priority: 4
-    api_key: CODE_API_KEY_REPLACED
-
-  - name: volcengine-lite
-    display: 火山引擎 Doubao-Lite
-    endpoint: https://ark.cn-beijing.volces.com/api/v3
-    model: ep-20260613102219-rxrhv
-    priority: 5
-    api_key: VOLCENGINE_API_KEY_REPLACED
+    api_key: ${ZHIPU_API_KEY}
 
   - name: openrouter
-    display: OpenRouter (海外兜底)
+    display: OpenRouter Free (兜底)
     endpoint: https://openrouter.ai/api/v1
     model: openrouter/free
-    priority: 6
-    api_key: OPENROUTER_API_KEY_REPLACED
+    priority: 3
+    api_key: ${OPENROUTER_API_KEY}
     headers:
       HTTP-Referer: http://localhost:5080
       X-Title: Free-API-Hub
-
-  - name: bocha
-    display: 博查 (余额不足)
-    endpoint: https://api.bochaai.com/v1
-    model: deepseek-v4-flash
-    priority: 10
-    api_key: CHAT_API_KEY_REPLACED

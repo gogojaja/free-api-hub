@@ -1,0 +1,29 @@
+﻿需求规格说明书 (SRS) — 引言,
+项目,内容
+1.1 编写目的,本文档定义 Free API Hub 项目的软件需求规格，供需求分析师、架构设计师、开发工程师、测试工程师使用。文档遵循 IEEE Std 830-1998 标准，作为需求基线供后续架构设计、开发、测试阶段追溯。
+1.2 文档范围,覆盖 Free API Hub 双实例网关的全部功能需求、非功能需求、接口需求、数据需求、安全需求、环境需求。不覆盖客户端（opencode/VSCode）侧配置。
+1.3 项目概述,Free API Hub 是统一多免费 API 提供商网关，对外暴露 OpenAI 兼容接口，支持多 Provider 自动 failover。采用双实例架构：聊天实例(:5080) 通用对话、编程实例(:5081) 代码生成辅助。
+1.4 术语与缩略语,"SRS: Software Requirements Specification
+API: Application Programming Interface
+Provider: API 提供商（如智谱AI、DeepSeek、OpenRouter）
+Failover: 故障自动切换
+SSE: Server-Sent Events，流式响应协议
+RTM: Requirements Traceability Matrix，需求追溯矩阵
+RCE: Remote Code Execution，远程代码执行
+AK/SK: Access Key ID / Secret Access Key，云平台签名认证"
+1.5 参考资料,"1. IEEE Std 830-1998: Recommended Practice for Software Requirements Specifications
+2. ISO/IEC/IEEE 29148:2018: Systems and software engineering — Life cycle processes — Requirements engineering
+3. ISO/IEC 25010:2011: Systems and software Quality Requirements and Evaluation (SQuaRE)
+4. OWASP API Security Top 10 (2023)
+5. OpenAI API Reference: https://platform.openai.com/docs/api-reference
+6. 项目设计文档: docs/design.md"
+1.6 文档概述,"第1章引言：文档目的、范围、术语、参考
+第2章总体描述：产品视角、功能概述、用户类别、约束
+第3章功能需求：20条功能需求详细规格
+第4章非功能需求：ISO/IEC 25010 八大质量特征
+第5章接口需求：外部API接口规格
+第6章数据需求：数据模型、数据字典
+第7章界面需求：无UI，标注为后台服务
+第8章安全需求：认证、授权、数据安全、威胁建模
+第9章环境需求：部署架构、运行环境
+第10章追溯矩阵：需求-来源-模块-测试用例追溯"

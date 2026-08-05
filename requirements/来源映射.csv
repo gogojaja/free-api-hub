@@ -1,0 +1,4 @@
+﻿来源,来源类型,覆盖需求编号
+docs/requirements.md,现有系统/项目文档,REQ-01~REQ-17
+docs/design.md,现有系统/设计文档,REQ-01~REQ-17
+需求规格说明书_SRS_v1.0.xlsx,存量 SRS（待迁移 CSV）,REQ-01~REQ-17

@@ -1,0 +1,16 @@
+#!/bin/bash
+# AI Agent 层启动脚本
+PID_FILE="data/agent.pid"
+LOG_FILE="data/agent.log"
+cd "$(dirname "$0")/.."
+
+if [ -f "$PID_FILE" ] && kill -0 $(cat "$PID_FILE") 2>/dev/null; then
+    echo "Agent 已在运行 (PID $(cat $PID_FILE))"
+    exit 0
+fi
+
+nohup venv/bin/python src/agent.py > "$LOG_FILE" 2>&1 &
+echo $! > "$PID_FILE"
+sleep 2
+echo "Agent 已启动 (PID $(cat $PID_FILE))"
+echo "日志: $LOG_FILE"

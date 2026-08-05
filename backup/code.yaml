@@ -1,0 +1,19 @@
+# Free API Hub — 编程实例配置
+# 代码生成 / 编程辅助
+
+gateway:
+  port: 5081
+  retry_seconds: 15
+  timeout: 30
+  log: data/code.log
+
+providers:
+  - name: openrouter
+    display: OpenRouter
+    endpoint: https://openrouter.ai/api/v1
+    model: deepseek/deepseek-v4-flash:free
+    priority: 1
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub

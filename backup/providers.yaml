@@ -1,0 +1,18 @@
+# Free API Hub 提供商配置（已废弃，改用 config/chat.yaml / config/code.yaml）
+# 保留供旧版启动脚本兼容，新部署请使用双实例配置
+
+gateway:
+  port: 5080
+  retry_seconds: 15
+  timeout: 30
+
+providers:
+  - name: openrouter
+    display: OpenRouter
+    endpoint: https://openrouter.ai/api/v1
+    model: deepseek/deepseek-v4-flash:free
+    priority: 1
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub

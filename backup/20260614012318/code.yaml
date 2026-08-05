@@ -1,0 +1,50 @@
+# Free API Hub — 编程实例配置
+# 代码生成 / 编程辅助
+
+gateway:
+  port: 5081
+  retry_seconds: 15
+  timeout: 60
+  log: data/code.log
+
+providers:
+  - name: siliconflow-coder
+    display: 硅基流动 Qwen3-Coder
+    endpoint: https://api.siliconflow.cn/v1
+    model: Qwen/Qwen3-Coder-30B-A3B-Instruct
+    priority: 1
+    api_key: CODE_API_KEY_REPLACED
+
+  - name: nemotron-super
+    display: NVIDIA Nemotron 3 Super Free
+    endpoint: https://openrouter.ai/api/v1
+    model: nvidia/nemotron-3-super-120b-a12b:free
+    priority: 2
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub
+
+  - name: nemotron
+    display: NVIDIA Nemotron 3 Ultra Free
+    endpoint: https://openrouter.ai/api/v1
+    model: nvidia/nemotron-3-ultra-550b-a55b:free
+    priority: 3
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub
+
+  - name: volcengine-code
+    display: 火山引擎 Doubao-Code
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: ep-20260613101407-6vz7g
+    priority: 4
+    api_key: VOLCENGINE_API_KEY_REPLACED
+
+  - name: siliconflow-code
+    display: 硅基流动 Qwen-Coder
+    endpoint: https://api.siliconflow.cn/v1
+    model: Qwen/Qwen2.5-Coder-32B-Instruct
+    priority: 5
+    api_key: CODE_API_KEY_REPLACED

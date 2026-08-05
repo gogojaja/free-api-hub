@@ -1,0 +1,16 @@
+﻿需求规格说明书 (SRS) — 环境需求,,,,,
+需求编号,环境维度,需求描述,配置/规格,优先级,状态
+REQ-ENV-DEPLOY-001,部署架构,"双实例本地部署, 绑定127.0.0.1","chat:5080 + code:5081, 独立进程/配置/日志/PID",P0,已实现
+REQ-ENV-DEPLOY-002,进程守护,launchd开机自启 + KeepAlive自动拉活,scripts/com.user.freeapihub.chat.plist + com.user.freeapihub.code.plist,P1,已实现
+REQ-ENV-OS-001,操作系统,macOS 13+ (Ventura/Sonoma),开发/测试环境: macOS,P1,已实现
+REQ-ENV-RUNTIME-001,运行时,Python 3.12+,python3 -m venv venv 创建虚拟环境,P0,已实现
+REQ-ENV-NET-001,网络环境,可访问国内(智谱/DeepSeek/火山引擎)和海外(OpenRouter)API端点,"带宽: >=10Mbps; 延迟: 国内<100ms, 海外<300ms",P0,已实现
+REQ-ENV-NET-002,端口规划,测试环境端口: 5080(聊天)/5081(编程),禁止操作5001/5002/5003(主环境端口),P0,已实现
+REQ-ENV-HW-001,硬件资源,"最小配置: CPU 2核, 内存 4GB, 磁盘 10GB","推荐配置: CPU 4核, 内存 8GB, 磁盘 50GB",P2,未测试
+REQ-ENV-DEP-001,Python依赖,"flask, requests, pyyaml, openpyxl",requirements.txt锁定版本,P0,已实现
+REQ-ENV-DEP-002,环境变量,"ZHIPU_API_KEY, DEEPSEEK_API_KEY, OPENROUTER_API_KEY, VOLCENGINE_API_KEY, ADMIN_TOKEN",".env文件管理, 加入.gitignore",P0,待整改
+REQ-ENV-MATRIX-001,环境矩阵,"开发环境=测试环境=本地macOS, 无预生产/生产环境","单一环境部署, 无环境差异",P2,已实现
+REQ-ENV-LOG-001,日志管理,按实例独立日志文件,"data/chat.log, data/code.log",P1,已实现
+REQ-ENV-LOG-002,日志轮转,"日志文件需自动轮转, 防止无限增长","待实现: logging.handlers.RotatingFileHandler(maxBytes=10MB, backupCount=5)",P2,待实现
+REQ-ENV-SCRIPT-001,启动/停止脚本,提供双实例启动/停止脚本,"scripts/start-chat.sh, start-code.sh, stop-chat.sh, stop-code.sh, start.sh, stop.sh",P1,已实现
+REQ-ENV-CHECK-001,环境标记核验,修改文件前运行check_env.py确认环境标记,"scripts/check_env.py (待创建), .env_type文件内容为'test'",P0,待实现

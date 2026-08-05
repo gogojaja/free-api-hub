@@ -1,0 +1,31 @@
+﻿需求规格说明书 (SRS) — 需求追溯矩阵,,,,,,,,,
+需求编号,需求描述,需求来源,优先级,关联功能模块,关联接口,关联数据实体,关联测试用例,关联设计文档,状态
+REQ-FUNC-API-001,OpenAI兼容对话接口,原始需求REQ-01,P0,server.py: chat_completions(),POST /v1/chat/completions,—,"TC-05, TC-06",design.md §3.2,已实现
+REQ-FUNC-API-002,模型列表接口,原始需求REQ-02,P0,server.py: list_models(),GET /v1/models,—,TC-02,design.md §3.1,已实现
+REQ-FUNC-API-003,流式响应,原始需求REQ-03,P0,gateway.py: _StreamWrapper,SSE流式,—,TC-06,design.md §3.2,已实现
+REQ-FAILOVER-001,多Provider自动切换,原始需求REQ-04/05,P0,gateway.py: call_api(),—,failed_providers,TC-05,design.md §3.2,已实现
+REQ-FAILOVER-002,失败Provider自动恢复,原始需求REQ-06,P0,gateway.py: get_available_providers(),—,failed_providers,—,design.md §3.2,已实现
+REQ-FAILOVER-003,失败状态重置,原始需求REQ-10,P1,gateway.py: reset_failures(),POST /gateway/reset,failed_providers,TC-04,design.md §3.1,已实现
+REQ-ROUTE-001,模型路由隔离,原始需求REQ-12,P0,gateway.py: call_api() model处理,—,Provider配置,"TC-07, TC-08",design.md §3.2,已实现
+REQ-CONFIG-001,YAML配置管理,原始需求REQ-07,P0,gateway.py: _load_config(),—,config/*.yaml,TC-08,design.md §4,已实现
+REQ-CONFIG-002,配置热加载,原始需求(非功能-维护),P1,gateway.py: _load_config() (待改造),—,config/*.yaml,—,design.md §4,未实现
+REQ-CONFIG-003,环境变量密钥管理,安全评审D-S05,P0,gateway.py: _resolve_env() (待实现),—,.env,—,整改方案D-S05,待整改
+REQ-CONFIG-004,双实例独立配置,原始需求REQ-13,P0,server.py: --config参数,—,"config/chat.yaml, code.yaml",—,design.md §1.1,已实现
+REQ-TRACK-001,用量追踪,原始需求REQ-08,P1,"gateway.py: _track(), _save_usage()",GET /gateway/status,data/usage.json,TC-03,design.md §3.2,部分实现
+REQ-TRACK-002,网关状态查询,原始需求REQ-09,P1,gateway.py: get_status(),GET /gateway/status,—,TC-03,design.md §3.1,已实现
+REQ-HEALTH-001,健康检查,原始需求REQ-11,P1,server.py: health(),GET /health,—,TC-01,design.md §3.1,已实现
+REQ-HEALTH-002,深度健康检查,评审D-M04,P1,server.py (待实现),GET /health (待改造),—,—,—,待实现
+REQ-SEC-001,管理端点认证,安全评审D-S06,P0,server.py: require_auth (待实现),管理端点,—,—,整改方案D-S06,待整改
+REQ-SEC-002,API调用频率限制,安全评审D-M09,P1,gateway.py (待实现),全部端点,—,—,—,待实现
+REQ-SEC-003,请求体大小限制,安全评审D-M10,P1,server.py (待实现),POST端点,—,—,—,待实现
+REQ-DEGRADE-001,降级策略-熔断器,评审D-S03,P1,gateway.py: CircuitBreaker (待实现),—,—,—,整改方案D-S03,待实现
+REQ-DEGRADE-002,降级策略-缓存降级,评审D-S03,P2,gateway.py (待实现),—,缓存数据,—,整改方案D-S03,待实现
+REQ-NFR-PERF-001,响应时间,ISO/IEC 25010,P1,gateway.py: timeout配置,—,—,—,design.md §4,部分实现
+REQ-NFR-REL-004,可恢复性,ISO/IEC 25010,P0,gateway.py: retry_seconds,—,failed_providers,—,design.md §4,已实现
+REQ-NFR-SEC-001,API Key保密性,OWASP API #2,P0,gateway.py: _resolve_env (待实现),—,.env,—,整改方案D-S05,待整改
+REQ-NFR-COMP-001,OpenAI兼容性,原始需求(兼容),P0,server.py + gateway.py,全部/v1接口,—,"TC-05, TC-06",design.md §5,已实现
+REQ-IF-INT-001,智谱AI接口,config/chat.yaml,P0,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5,已实现
+REQ-IF-INT-002,DeepSeek接口,config/code.yaml,P0,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5,已实现
+REQ-IF-INT-003,OpenRouter接口,config/chat+code.yaml,P0,gateway.py: call_api(),上游HTTPS,Provider配置,—,design.md §5,已实现
+REQ-IF-INT-004,火山引擎接口,config/code.yaml,P1,gateway.py: call_api() + _sign_v4(),上游HTTPS,Provider配置,—,design.md §5,已实现
+REQ-IF-INT-005,Provider信息透传,原始需求(v3.2),P1,server.py: 响应注入,HTTP响应头/JSON,—,—,design.md §3.3,已实现

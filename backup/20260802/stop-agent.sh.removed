@@ -1,0 +1,20 @@
+#!/bin/bash
+# AI Agent 层停止脚本
+PID_FILE="data/agent.pid"
+cd "$(dirname "$0")/.."
+
+if [ ! -f "$PID_FILE" ]; then
+    echo "未找到 PID 文件"
+    pkill -f "python src/agent.py" 2>/dev/null && echo "Agent 已停止" || echo "Agent 未运行"
+    exit 0
+fi
+
+PID=$(cat "$PID_FILE")
+if kill -0 "$PID" 2>/dev/null; then
+    kill "$PID"
+    rm -f "$PID_FILE"
+    echo "Agent 已停止 (PID $PID)"
+else
+    echo "Agent 未运行 (PID $PID 不存在)"
+    rm -f "$PID_FILE"
+fi

@@ -1,0 +1,52 @@
+# Free API Hub — 聊天实例配置
+# 通用对话 / 轻量任务
+# 优先使用国内免费提供商，海外 OpenRouter 兜底
+
+gateway:
+  port: 5080
+  retry_seconds: 15
+  timeout: 30
+  log: data/chat.log
+
+providers:
+  - name: bocha
+    display: 博查
+    endpoint: https://api.bochaai.com/v1
+    model: deepseek-v4-flash
+    priority: 1
+    api_key: CHAT_API_KEY_REPLACED
+
+  - name: zhipu
+    display: 智谱AI
+    endpoint: https://open.bigmodel.cn/api/paas/v4
+    model: glm-4-flash
+    priority: 2
+    api_key: ZHIPU_API_KEY_REPLACED
+
+  - name: volcengine
+    display: 火山引擎
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: <推理接入点ID>
+    priority: 3
+    auth_type: ak_sk
+    access_key_id: VOLC_ACCESS_KEY_ID_REPLACED
+    secret_access_key: VOLC_SECRET_ACCESS_KEY_REPLACED==
+    region: cn-beijing
+    note: 需在 console.volcengine.com → 方舟 → 推理接入点创建，获取 endpoint ID 替换 <推理接入点ID>
+
+  - name: deepseek
+    display: DeepSeek
+    endpoint: https://api.deepseek.com/v1
+    model: deepseek-chat
+    priority: 4
+    api_key: DEEPSEEK_API_KEY_REPLACED
+
+  - name: openrouter
+    display: OpenRouter (海外兜底)
+    endpoint: https://openrouter.ai/api/v1
+    model: openrouter/free
+    priority: 10
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub

@@ -1,0 +1,15 @@
+﻿需求规格说明书 (SRS) — 安全需求,,,,,,
+需求编号,安全维度,需求描述,控制措施,威胁模型(STRIDE),优先级,状态
+REQ-SEC-AUTH-001,身份认证,"管理端点(/gateway/status, /gateway/reset)需要API Token认证","Bearer Token认证中间件, Token从环境变量ADMIN_TOKEN读取",Spoofing(欺骗): 未认证访问管理端点,P0,待整改
+REQ-SEC-AUTH-002,身份认证,上游API Key通过环境变量注入，不硬编码在配置文件中,.env文件(加入.gitignore) + ${VAR}占位符替换,Information Disclosure(信息泄露): Git仓库泄露API Key,P0,待整改
+REQ-SEC-AC-001,访问控制,服务绑定127.0.0.1，不对外网暴露,Flask host='127.0.0.1',Elevation of Privilege(权限提升): 外网访问,P0,已实现
+REQ-SEC-AC-002,访问控制,/v1/chat/completions和/v1/models保持无认证（本地服务）,不增加认证装饰器,—,P1,已实现
+REQ-SEC-DATA-001,数据安全-传输,与上游API通信使用HTTPS加密传输,所有上游endpoint均为https://,Tampering(篡改): 中间人攻击,P0,已实现
+REQ-SEC-DATA-002,数据安全-存储,API Key不存储在Git仓库中,环境变量 + .gitignore,Information Disclosure: 代码库泄露,P0,待整改
+REQ-SEC-DATA-003,数据安全-日志,日志中不记录API Key明文,"日志仅记录Provider名称/模型/状态, 不记录Key",Information Disclosure: 日志泄露,P1,已实现
+REQ-SEC-DATA-004,数据安全-状态,get_status()不暴露API Key值,providers_configured中仅返回has_key布尔值(待移除),Information Disclosure: 状态接口泄露Key状态,P2,待整改
+REQ-SEC-AUDIT-001,安全审计,记录每次请求的Provider、模型、耗时、状态,logging.FileHandler写入实例日志,Repudiation(否认): 无操作记录,P1,已实现
+REQ-SEC-RATE-001,频率限制,对API请求实施Rate Limiting,"令牌桶算法, 按Provider配置速率",Denial of Service(拒绝服务): 无限速调用,P1,待实现
+REQ-SEC-INPUT-001,输入校验,"限制请求体大小, 校验必填字段",Content-Length检查 + messages字段校验,Tampering: 恶意大payload,P1,待实现
+REQ-SEC-SANDBOX-001,沙箱隔离,"若保留Agent层, 代码执行需在沙箱中隔离",Docker容器: --network=none --memory=256m --read-only,Elevation of Privilege: RCE,P0,待整改
+REQ-SEC-THREAT-001,威胁建模,STRIDE威胁建模覆盖全部攻击面,已识别威胁: Spoofing(管理端点)/Info Disclosure(Key泄露)/DoS(无限速)/Tampering(输入)/EoP(Agent RCE),—,P1,已完成

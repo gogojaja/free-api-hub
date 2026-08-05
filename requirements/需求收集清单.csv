@@ -1,0 +1,18 @@
+﻿编号,原始描述,优先级,分类标签,来源,提出人,日期
+REQ-01,暴露 OpenAI 兼容的 /v1/chat/completions 接口,P0,功能,docs/requirements.md,2026-08-05
+REQ-02,暴露 /v1/models 接口，列出可用模型,P0,功能,docs/requirements.md,2026-08-05
+REQ-03,支持流式（SSE）和非流式响应,P0,功能,docs/requirements.md,2026-08-05
+REQ-04,多 API 提供商自动 failover，请求按优先级依次尝试,P0,功能,docs/requirements.md,2026-08-05
+REQ-05,提供商不可用时（429/401/5xx/超时）自动标记失败并切换,P0,功能,docs/requirements.md,2026-08-05
+REQ-06,失败提供商 configurable 秒后自动恢复重试（默认 15s）,P0,功能,docs/requirements.md,2026-08-05
+REQ-07,提供商配置通过 YAML 文件管理，支持动态添加/修改,P0,功能,docs/requirements.md,2026-08-05
+REQ-08,用量追踪（请求数、token 数、错误数、最后使用时间）,P1,功能,docs/requirements.md,2026-08-05
+REQ-09,网关状态查询 /gateway/status,P1,功能,docs/requirements.md,2026-08-05
+REQ-10,失败状态重置 /gateway/reset,P1,功能,docs/requirements.md,2026-08-05
+REQ-11,健康检查 /health,P1,功能,docs/requirements.md,2026-08-05
+REQ-12,模型路由隔离：每个提供商使用自身配置的模型，不受客户端传入 model 参数影响,P0,功能,docs/requirements.md,2026-08-05
+REQ-13,双实例部署：聊天和编程分离，独立端口/配置/日志/进程,P0,功能,docs/requirements.md,2026-08-05
+REQ-14,火山引擎单账号多 endpoint 管理,P1,功能,docs/requirements.md,2026-08-05
+REQ-15,AK/SK V4 签名认证支持（为火山引擎保留）,P2,安全,docs/requirements.md,2026-08-05
+REQ-16,多 OpenRouter 免费模型接入,P1,功能,docs/requirements.md,2026-08-05
+REQ-17,同平台多模型多 endpoint：硅基流动单 Key 多模型、火山引擎多 endpoint,P1,功能,docs/requirements.md,2026-08-05

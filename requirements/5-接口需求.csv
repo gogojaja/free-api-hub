@@ -1,0 +1,20 @@
+﻿需求规格说明书 (SRS) — 接口需求,,,,,,,,,
+需求编号,接口名称,方向,协议,请求格式,响应格式,认证方式,异常处理,优先级,状态
+REQ-IF-EXT-001,POST /v1/chat/completions,外部→系统,HTTP/JSON,"{""model"":""任意值(被忽略)"",""messages"":[{""role"":""user"",""content"":""...""}],""stream"":false,""temperature"":0.7,""max_tokens"":2048}","非流式:{""id"":""chatcmpl-xxx"",""object"":""chat.completion"",""choices"":[...],""usage"":{...},""provider_name"":""..."",""provider_display"":""...""}
+流式:SSE data:{chunk}\n\n ... data:[DONE]",无（客户端API Key为占位符）,400(缺messages) / 503(全部Provider失败) / 500(内部错误),P0,已实现
+REQ-IF-EXT-002,GET /v1/models,外部→系统,HTTP/JSON,无请求体,"{""object"":""list"",""data"":[{""id"":""模型名"",""provider"":""提供商"",""display"":""展示名"",""priority"":1}]}",无,503(网关未初始化) / 500(内部错误),P0,已实现
+REQ-IF-EXT-003,GET /gateway/status,外部→系统,HTTP/JSON,无请求体（需Bearer Token认证）,"{""current_provider"":""..."",""available_providers"":[...],""failed_providers"":[...],""providers_configured"":[...],""usage"":{...}}",Bearer Token (ADMIN_TOKEN),401(未认证) / 503(未初始化),P1,部分实现
+REQ-IF-EXT-004,POST /gateway/reset,外部→系统,HTTP/JSON,无请求体（需Bearer Token认证）,"{""status"":""ok"",""message"":""失败状态已重置""}",Bearer Token (ADMIN_TOKEN),401(未认证) / 503(未初始化),P1,部分实现
+REQ-IF-EXT-005,GET /health,外部→系统,HTTP/JSON,无请求体,"{""status"":""ok"",""gateway_ready"":true}",无,—,P1,已实现
+REQ-IF-INT-001,智谱AI API,系统→上游,HTTPS/JSON,"POST https://open.bigmodel.cn/api/paas/v4/chat/completions
+Authorization: Bearer <ZHIPU_API_KEY>",OpenAI格式JSON响应,Bearer Token,429/401→标记失败; 5xx→标记失败; Timeout→标记失败,P0,已实现
+REQ-IF-INT-002,DeepSeek API,系统→上游,HTTPS/JSON,"POST https://api.deepseek.com/v1/chat/completions
+Authorization: Bearer <DEEPSEEK_API_KEY>",OpenAI格式JSON响应,Bearer Token,429/401→标记失败; 5xx→标记失败; Timeout→标记失败,P0,已实现
+REQ-IF-INT-003,OpenRouter API,系统→上游,HTTPS/JSON,"POST https://openrouter.ai/api/v1/chat/completions
+Authorization: Bearer <OPENROUTER_API_KEY>
+HTTP-Referer: http://localhost:5080
+X-Title: Free-API-Hub",OpenAI格式JSON响应,Bearer Token + 自定义Header,429/401→标记失败; 5xx→标记失败; Timeout→标记失败,P0,已实现
+REQ-IF-INT-004,火山引擎API,系统→上游,HTTPS/JSON,"POST https://ark.cn-beijing.volces.com/api/v3/chat/completions
+支持Bearer Token和AK/SK V4签名",OpenAI格式JSON响应,Bearer Token (当前) / AK/SK V4 (预留),429/401→标记失败; 5xx→标记失败; Timeout→标记失败,P1,已实现
+REQ-IF-INT-005,Provider信息透传,系统→客户端,HTTP响应头/JSON,—,"非流式:JSON body增加provider_name/provider_display字段
+流式:HTTP响应头X-Provider-Name/X-Provider-Display",—,Provider信息为null时省略字段/头,P1,已实现

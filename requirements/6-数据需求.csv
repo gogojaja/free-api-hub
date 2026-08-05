@@ -1,0 +1,12 @@
+﻿需求规格说明书 (SRS) — 数据需求,,,,,,,
+需求编号,数据项,类型,描述,存储位置,生命周期,优先级,状态
+REQ-DATA-ENT-001,Provider配置,YAML结构化,"每个Provider包含: name, display, endpoint, model, priority, api_key, auth_type, headers, access_key_id, secret_access_key","config/chat.yaml, config/code.yaml","创建时写入, 修改时更新, 删除时移除",P0,已实现
+REQ-DATA-ENT-002,网关配置,YAML结构化,"gateway节点: port, retry_seconds, timeout, log","config/chat.yaml, config/code.yaml","启动时加载, 运行时不变(待整改为热加载)",P0,已实现
+REQ-DATA-ENT-003,用量数据,JSON结构化,"每个Provider: total_requests(int), total_tokens(int), errors(int), last_used(ISO时间)",data/usage.json,"每次请求更新, 持久化到磁盘",P1,已实现
+REQ-DATA-ENT-004,失败状态,内存字典,failed_providers: {provider_name: 失败时间戳},内存(不持久化),"失败时写入, retry_seconds后自动清除, /gateway/reset手动清除",P0,已实现
+REQ-DATA-ENT-005,运行日志,文本日志,[LEVEL] TIMESTAMP - MESSAGE; 记录Provider尝试/失败/切换/用量,"data/chat.log, data/code.log","按实例独立写入, 无自动轮转(待改进)",P1,已实现
+REQ-DATA-ENT-006,PID文件,文本,"进程PID, 用于启动/停止脚本管理","data/chat.pid, data/code.pid, data/gateway.pid","启动时写入, 停止时删除",P2,已实现
+REQ-DATA-FLOW-001,请求-响应数据流,—,客户端→server.py(解析)→gateway.call_api(选Provider)→上游API→gateway(处理响应)→server.py(注入provider信息)→客户端,—,—,P0,已实现
+REQ-DATA-FLOW-002,流式数据流,—,客户端→server.py→gateway.call_api(stream=True)→上游API(SSE)→_StreamWrapper(逐行)→server.py(SSE包装)→客户端,—,—,P0,已实现
+REQ-DATA-QUAL-001,用量数据准确性,—,非流式: 使用上游返回的usage.total_tokens; 流式: 使用_estimate_tokens估算(len*1.5),—,"非流式精确, 流式待引入tiktoken改进",P1,部分实现
+REQ-DATA-BACKUP-001,配置备份,—,修改config/*.yaml前自动备份到backup/目录,backup/目录,"修改前创建, 保留历史版本",P1,已实现

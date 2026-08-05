@@ -1,0 +1,33 @@
+# Free API Hub — 编程实例配置
+# 代码生成 / 编程辅助
+
+gateway:
+  port: 5081
+  retry_seconds: 15
+  timeout: 30
+  log: data/code.log
+
+providers:
+  - name: volcengine
+    display: 火山引擎
+    endpoint: https://ark.cn-beijing.volces.com/api/v3
+    model: ep-20260613093038-jrf9s
+    priority: 1
+    api_key: VOLCENGINE_API_KEY_REPLACED
+
+  - name: deepseek
+    display: DeepSeek
+    endpoint: https://api.deepseek.com/v1
+    model: deepseek-chat
+    priority: 10
+    api_key: DEEPSEEK_API_KEY_REPLACED
+
+  - name: openrouter
+    display: OpenRouter (兜底)
+    endpoint: https://openrouter.ai/api/v1
+    model: deepseek/deepseek-v4-flash:free
+    priority: 10
+    api_key: OPENROUTER_API_KEY_REPLACED
+    headers:
+      HTTP-Referer: http://localhost:5080
+      X-Title: Free-API-Hub

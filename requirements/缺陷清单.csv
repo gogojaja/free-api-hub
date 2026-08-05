@@ -1,0 +1,27 @@
+﻿缺陷编号,违反原则,缺陷等级,缺陷描述,涉及角色,整改建议,整改完成时间,复核结果,闭环状态
+D-S01,IEEE 830 §4.3 完备性、ISO/IEC/IEEE 29148 §5.2.4 一致性,严重,需求文档与实际实现严重脱节：requirements.md 中列出的提供商清单（智谱GLM-4-Flash、火山Doubao、硅基Qwen等）与实际 config/chat.yaml、code.yaml 中的配置完全不一致,需求分析师,同步需求文档与实际配置，按实际配置重写需求条目,,待复核,待整改
+D-S02,IEEE 830 §4.3 完备性、PMBOK 范围管理,严重,"Agent 层（src/agent.py, 513行）存在且功能完整，但需求文档中完全无 Agent 相关需求。设计文档 v3.0 记录已移除 Agent 层，但代码仍存在，属于范围蔓延",需求分析师,明确 Agent 层定位：若保留则补充需求，若废弃则移除代码,,待复核,待整改
+D-S03,ISO/IEC 25010 §6.4 可恢复性、§6.3 容错性,严重,全部 Provider 失败时无降级策略：仅返回 503 错误，无缓存降级、无排队重试、无熔断恢复机制,架构设计师,设计降级策略：缓存最近成功响应、熔断器模式、排队重试机制,,待复核,待整改
+D-S04,IEEE Std 830-1998 全文,严重,需求文档不符合 IEEE 830 标准：当前仅为 Markdown 简表，缺少引言、总体描述、功能需求详细规格、非功能量化指标、接口规格、数据需求、追溯矩阵等标准章节,需求分析师,按 IEEE 830 标准 10-Sheet 结构重写 SRS 文档,,待复核,待整改
+D-S05,OWASP API Security Top 10 #2、ISO/IEC 25010 §7 安全性,严重,API Key 明文存储并提交至代码库：config/chat.yaml 和 code.yaml 中包含 6 个真实 API Key（智谱、DeepSeek、OpenRouter、火山引擎），均为明文,架构设计师,API Key 从代码库移除，改用环境变量或 .env 文件（加入 .gitignore）,,待复核,待整改
+D-S06,OWASP API Security Top 10 #1,严重,管理端点无认证保护：/gateway/status（暴露全部配置和用量）、/gateway/reset（重置失败状态）无任何认证机制,架构设计师,增加 API Token 认证或 Basic Auth，管理端点独立认证中间件,,待复核,待整改
+D-S07,OWASP Top 10 #03 Injection、ISO/IEC 25010 §7 安全性,严重,agent.py 允许任意代码执行且无沙箱：ToolExecutor._execute_code() 直接 subprocess.run 执行 LLM 生成的代码，_run_command() 使用 shell=True，无沙箱隔离,架构设计师,移除 agent.py 或增加沙箱隔离（Docker/namespace/seccomp）+ 命令白名单,,待复核,待整改
+D-S08,ISO/IEC/IEEE 29148 §6.2 追溯性、PMBOK 范围基准管理,严重,需求文档与设计文档的提供商清单完全不一致：requirements.md 列 6+5 个提供商，design.md 列 3+4 个，config 实际 3+4 个，三方数据互不匹配,需求分析师,以实际配置为基线，统一需求文档和设计文档的提供商清单,,待复核,待整改
+D-M01,ISO/IEC/IEEE 29148 §5.2.4 一致性,主要,端口规划文档自相矛盾：AGENTS.md 规定 5101/5102/5103，requirements.md 声明 5080/5081，实际使用 5080/5081,需求分析师,统一端口规划文档，明确测试环境端口为 5080/5081,,待复核,待整改
+D-M02,IEEE 830 §4.5 可验证性,主要,环境隔离需求未落地：需求要求禁止操作 5001/5002/5003 端口，但代码中无端口校验逻辑，check_env.py 不存在,开发工程师,实现 scripts/check_env.py 环境标记核验脚本,,待复核,待整改
+D-M03,ISO/IEC 25010 §5.1 功能正确性,主要,流式响应 token 用量估算不准确：_estimate_tokens() 使用 len(text)*1.5 粗估，中文内容误差极大,开发工程师,引入 tiktoken 库精确计算，或使用上游返回的 usage 数据,,待复核,待整改
+D-M04,ISO/IEC 25010 §6.3 容错性,主要,健康检查深度不足：/health 仅检查 gateway 是否初始化，不检查是否有可用 Provider,开发工程师,分离 Liveness/Readiness 探针，Readiness 检查可用 Provider 数量,,待复核,待整改
+D-M05,ISO/IEC 25010 §6.1 成熟性,主要,_StreamWrapper.__next__() 使用递归处理空行，持续空行将导致 RecursionError,开发工程师,改为 while 循环实现，移除递归调用,,待复核,待整改
+D-M06,IEEE 830 §4.6 可追溯性,主要,需求无唯一编号体系：REQ-01~REQ-17 无维度分类，无法从编号识别需求类型和归属模块,需求分析师,采用 REQ-<维度>-<模块>-<序号> 编号规则重编全部需求,,待复核,待整改
+D-M07,ISO/IEC/IEEE 29148 §5.2.4 可验证性,主要,需求描述缺少验收标准：17 条需求中无一条包含明确验收标准（如切换时间上限、最大重试次数）,需求分析师,每条需求补充量化验收标准,,待复核,待整改
+D-M08,IEEE 830 §4.6 可追溯性、ISO/IEC/IEEE 29148 §6.2 追溯,主要,无需求双向追溯矩阵：tests/test_regression.py 中 8 个测试用例未关联到任何需求编号,需求分析师,建立需求-代码-测试用例双向追溯矩阵,,待复核,待整改
+D-M09,OWASP API Security Top 10 #4,主要,无 API 调用频率限制：网关未实现 Rate Limiting，可能导致上游 API 被封禁,架构设计师,实现基于令牌桶的 Rate Limiter，按 Provider 配置速率限制,,待复核,待整改
+D-M10,OWASP API Security Top 10 #4,主要,无输入校验和请求大小限制：request.get_json(force=True) 无大小限制、无字段校验,开发工程师,增加请求体大小限制（如 1MB）和输入字段校验,,待复核,待整改
+D-M11,ISO/IEC/IEEE 29148 §5.2.4 可验证性,主要,需求状态标记与实际不符：REQ-01~REQ-17 全部标记为 ✅，但 REQ-06 配置热加载未实现、REQ-08 用量数据不准确,需求分析师,逐条核实需求实际实现状态，更新状态标记,,待复核,待整改
+D-M12,ISO/IEC/IEEE 29148 §6.3 变更管理,主要,变更记录缺失：设计文档记录了 v1.0~v3.2 变更历史，但无对应的变更审批记录、影响评估记录,文档管理员,补充历史变更审批记录，建立变更管理流程,,待复核,待整改
+D-N01,IEEE 830 §4.3 完备性,次要,双实例配置差异未在需求中定义：聊天 retry_seconds=15/timeout=30，编程 retry_seconds=5/timeout=15，未说明设计依据,需求分析师,在 SRS 中补充双实例参数差异的设计依据说明,,待复核,待整改
+D-N02,ISO/IEC 25010 §6.1 成熟性,次要,线程安全问题：failed_providers 字典在多线程 Flask 中无锁保护，并发请求可能导致竞态条件,开发工程师,增加 threading.Lock 保护 failed_providers 和 usage 的并发访问,,待复核,待整改
+D-N03,IEEE 830 §4.5 可验证性,次要,配置热加载未实现：需求要求每次请求重新读取配置，但实际仅在 __init__ 时加载一次,开发工程师,实现配置文件修改时间检测+自动重载，或提供 /gateway/reload 端点,,待复核,待整改
+D-N04,项目规范（AGENTS.md）,次要,代码注释不符合 AGENTS.md 规范：gateway.py、server.py 缺少统一模块注释格式,开发工程师,按 AGENTS.md 规定的模块注释格式补充代码注释,,待复核,待整改
+D-N05,代码管理规范,次要,agent.py 未接入任何路由但仍存在：设计文档 v3.0 记录已移除，属于僵尸代码,开发工程师,随 D-S02 决策一并处理：保留则接入路由，废弃则删除,,待复核,待整改
+D-N06,ISO/IEC 25010 §7 安全性,次要,日志中可能记录敏感信息：get_status() 返回的 has_key 字段暴露了 Key 存在状态,开发工程师,移除 has_key 字段或改为布尔值脱敏,,待复核,待整改

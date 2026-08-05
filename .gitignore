@@ -5,3 +5,5 @@ __pycache__/
 config/providers.yaml
 data/usage.json
 *.log
+.env
+config/*.yaml.local

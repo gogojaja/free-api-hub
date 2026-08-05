@@ -7,6 +7,11 @@ import json
 import logging
 import time
 import datetime
+import hmac
+import hashlib
+import base64
+import urllib.parse
+import threading
 import requests
 import yaml
 from pathlib import Path
@@ -14,19 +19,146 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-CONFIG_DIR = BASE_DIR / "config"
 DATA_DIR = BASE_DIR / "data"
 
 
+def _load_dotenv():
+    """从项目根目录的 .env 文件加载环境变量（不覆盖已存在的值）"""
+    env_path = BASE_DIR / ".env"
+    if not env_path.exists():
+        return
+    for line in env_path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        value = value.strip()
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+_load_dotenv()
+
+
+class CircuitBreaker:
+    """熔断器：CLOSED → OPEN → HALF_OPEN → CLOSED
+
+    状态流转：
+      CLOSED    — 正常，记录失败次数；达到 failure_threshold 后 → OPEN
+      OPEN      — 熔断，拒绝请求；经过 recovery_timeout 后 → HALF_OPEN
+      HALF_OPEN — 探测，放行请求；成功 → CLOSED，失败 → OPEN
+    """
+
+    CLOSED = "closed"
+    OPEN = "open"
+    HALF_OPEN = "half_open"
+
+    def __init__(self, failure_threshold=3, recovery_timeout=60):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self._states = {}  # name -> {state, failure_count, last_failure_ts}
+        self._lock = threading.Lock()
+
+    def _get_state(self, name):
+        """获取当前状态（含 OPEN→HALF_OPEN 自动转换）"""
+        info = self._states.get(name)
+        if not info:
+            return self.CLOSED
+        if info["state"] == self.OPEN:
+            if time.time() - info["last_failure_ts"] >= self.recovery_timeout:
+                info["state"] = self.HALF_OPEN
+                return self.HALF_OPEN
+            return self.OPEN
+        return info["state"]
+
+    def is_available(self, name):
+        """检查 provider 是否可被调用（CLOSED 或 HALF_OPEN 可用）"""
+        with self._lock:
+            state = self._get_state(name)
+            return state != self.OPEN
+
+    def get_state(self, name):
+        """获取 provider 的熔断状态（公开接口，线程安全）"""
+        with self._lock:
+            return self._get_state(name)
+
+    def record_success(self, name):
+        """记录成功：重置为 CLOSED"""
+        with self._lock:
+            self._states.pop(name, None)
+
+    def record_failure(self, name):
+        """记录失败：累加计数，可能触发熔断"""
+        with self._lock:
+            info = self._states.get(name, {
+                "state": self.CLOSED,
+                "failure_count": 0,
+                "last_failure_ts": 0,
+            })
+            info["failure_count"] += 1
+            info["last_failure_ts"] = time.time()
+            if info["state"] == self.HALF_OPEN:
+                info["state"] = self.OPEN
+                info["failure_count"] = 0
+            elif info["failure_count"] >= self.failure_threshold:
+                info["state"] = self.OPEN
+            self._states[name] = info
+
+    def reset(self, name=None):
+        """重置熔断器"""
+        with self._lock:
+            if name:
+                self._states.pop(name, None)
+            else:
+                self._states.clear()
+
+    def get_detail(self):
+        """获取所有 provider 的熔断状态"""
+        with self._lock:
+            result = {}
+            for name, info in self._states.items():
+                state = self._get_state(name)
+                result[name] = {
+                    "state": state,
+                    "failure_count": info["failure_count"],
+                }
+            return result
+
+    def get_failed_names(self):
+        """获取处于 OPEN 状态的 provider 名称列表"""
+        with self._lock:
+            return [name for name, info in self._states.items()
+                    if self._get_state(name) == self.OPEN]
+
+
 class APIGateway:
-    def __init__(self):
-        self.config_path = CONFIG_DIR / "providers.yaml"
+    def __init__(self, config_path=None):
+        if config_path is None:
+            config_path = BASE_DIR / "config" / "providers.yaml"
+        self.config_path = Path(config_path)
         self.usage_path = DATA_DIR / "usage.json"
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         self._load_config()
+        self._setup_logging()
         self._load_usage()
         self.current_provider = None
-        self.failed_providers = {}
+        self.current_provider_display = None
+        self._lock = threading.Lock()
+        self._breaker = CircuitBreaker(
+            failure_threshold=self.gateway_cfg.get("failure_threshold", 3),
+            recovery_timeout=self.retry_seconds,
+        )
+
+    @staticmethod
+    def _resolve_env(value):
+        """将 ${ENV_VAR} 格式的值替换为环境变量实际值"""
+        if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+            env_key = value[2:-1]
+            return os.getenv(env_key, "")
+        return value
 
     def _load_config(self):
         if not self.config_path.exists():
@@ -36,12 +168,32 @@ class APIGateway:
             )
         raw = self.config_path.read_text(encoding="utf-8")
         self.config = yaml.safe_load(raw)
-        self.providers = sorted(
+        # 环境变量替换：将 ${ENV_VAR} 占位符替换为实际值
+        for p in self.config.get("providers", []):
+            for field in ("api_key", "access_key_id", "secret_access_key"):
+                if field in p:
+                    p[field] = self._resolve_env(p[field])
+        all_providers = sorted(
             self.config.get("providers", []),
             key=lambda p: p.get("priority", 99)
         )
+        # 过滤掉缺少 model 配置的提供商，避免路由时传无效模型名
+        self.providers = [p for p in all_providers if p.get("model")]
+        missing_model = [p["name"] for p in all_providers if not p.get("model")]
+        if missing_model:
+            logger.warning(f"以下提供商缺少 model 配置，已跳过: {missing_model}")
         self.gateway_cfg = self.config.get("gateway", {})
         self.retry_seconds = self.gateway_cfg.get("retry_seconds", 60)
+        self.request_timeout = self.gateway_cfg.get("timeout", 30)
+
+    def _setup_logging(self):
+        log_rel = self.gateway_cfg.get("log", "")
+        if log_rel:
+            log_file = BASE_DIR / log_rel
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            fh = logging.FileHandler(log_file, encoding="utf-8")
+            fh.setFormatter(logging.Formatter("[%(levelname)s] %(asctime)s - %(message)s"))
+            logger.addHandler(fh)
 
     def _load_usage(self):
         if self.usage_path.exists():
@@ -73,35 +225,97 @@ class APIGateway:
             json.dumps(self.usage, indent=2, ensure_ascii=False)
         )
 
+    @staticmethod
+    def _sign_v4(method, url, headers, body, access_key_id, secret_access_key, region, service):
+        """Volcengine V4 签名（兼容 AWS SigV4）。"""
+        now = datetime.datetime.utcnow()
+        amz_date = now.strftime("%Y%m%dT%H%M%SZ")
+        date_stamp = now.strftime("%Y%m%d")
+
+        parsed = urllib.parse.urlparse(url)
+        host = parsed.netloc
+        path = parsed.path or "/"
+        query = parsed.query
+
+        body_bytes = body.encode("utf-8") if isinstance(body, str) else body
+        content_sha256 = hashlib.sha256(body_bytes).hexdigest()
+
+        canonical_headers = {
+            "content-type": "application/json",
+            "host": host,
+            "x-content-sha256": content_sha256,
+            "x-date": amz_date,
+        }
+        signed_headers = ";".join(sorted(canonical_headers.keys()))
+
+        canonical_request = (
+            f"{method}\n{path}\n{query}\n"
+            + "\n".join(f"{k}:{v}" for k, v in sorted(canonical_headers.items())) + "\n"
+            f"{signed_headers}\n{content_sha256}"
+        )
+
+        credential_scope = f"{date_stamp}/{region}/{service}/request"
+        string_to_sign = (
+            "HMAC-SHA256\n"
+            f"{amz_date}\n{credential_scope}\n"
+            f"{hashlib.sha256(canonical_request.encode('utf-8')).hexdigest()}"
+        )
+
+        def _sign(key, msg):
+            return hmac.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+
+        sk_bytes = secret_access_key.encode("utf-8")
+        k_date = _sign(sk_bytes, date_stamp)
+        k_region = _sign(k_date, region)
+        k_service = _sign(k_region, service)
+        k_signing = _sign(k_service, "request")
+        signature = hmac.new(k_signing, string_to_sign.encode("utf-8"), hashlib.sha256).hexdigest()
+
+        auth = (
+            f"HMAC-SHA256 Credential={access_key_id}/{credential_scope}, "
+            f"SignedHeaders={signed_headers}, "
+            f"Signature={signature}"
+        )
+
+        return {
+            "Content-Type": "application/json",
+            "X-Date": amz_date,
+            "X-Content-Sha256": content_sha256,
+            "Authorization": auth,
+        }
+
+    def _has_creds(self, p):
+        auth_type = p.get("auth_type", "bearer")
+        if auth_type == "ak_sk":
+            return bool(p.get("access_key_id") and p.get("secret_access_key"))
+        return bool(p.get("api_key"))
+
     def get_available_providers(self):
-        now = time.time()
         available = []
         for p in self.providers:
             name = p["name"]
-            api_key = p.get("api_key", "")
-            if not api_key:
+            if not self._has_creds(p):
                 continue
-            if name in self.failed_providers:
-                failed_at = self.failed_providers[name]
-                if now - failed_at < self.retry_seconds:
-                    continue
-                del self.failed_providers[name]
+            if not self._breaker.is_available(name):
+                continue
             available.append(p)
         return available
 
     def _mark_failed(self, name):
-        self.failed_providers[name] = time.time()
-        u = self.usage.get(name, {})
-        u["errors"] = u.get("errors", 0) + 1
-        self._save_usage()
+        self._breaker.record_failure(name)
+        with self._lock:
+            u = self.usage.get(name, {})
+            u["errors"] = u.get("errors", 0) + 1
+            self._save_usage()
         logger.warning(f"[{name}] 已标记失败，{self.retry_seconds}s 后重试")
 
     def _track(self, name, tokens=0):
-        u = self.usage.get(name, {})
-        u["total_requests"] = u.get("total_requests", 0) + 1
-        u["total_tokens"] = u.get("total_tokens", 0) + tokens
-        u["last_used"] = datetime.datetime.now().isoformat()
-        self._save_usage()
+        with self._lock:
+            u = self.usage.get(name, {})
+            u["total_requests"] = u.get("total_requests", 0) + 1
+            u["total_tokens"] = u.get("total_tokens", 0) + tokens
+            u["last_used"] = datetime.datetime.now().isoformat()
+            self._save_usage()
 
     def call_api(self, messages, stream=False, model=None, **kwargs):
         providers = self.get_available_providers()
@@ -111,37 +325,46 @@ class APIGateway:
         last_error = None
         for provider in providers:
             name = provider["name"]
-            api_key = provider.get("api_key", "")
-            if not api_key:
-                continue
+            auth_type = provider.get("auth_type", "bearer")
 
             endpoint = provider["endpoint"].rstrip("/")
-            api_model = model or provider.get("model", "gpt-3.5-turbo")
+            api_model = provider.get("model") or "gpt-3.5-turbo"
             url = f"{endpoint}/chat/completions"
-
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            }
-            extra = provider.get("headers", {})
-            if extra:
-                headers.update(extra)
 
             payload = {
                 "model": api_model,
                 "messages": messages,
                 "stream": stream,
-                "temperature": kwargs.get("temperature", 0.7),
-                "max_tokens": kwargs.get("max_tokens", 2048),
+                **kwargs,
             }
+
+            body_str = json.dumps(payload, ensure_ascii=False)
+
+            if auth_type == "ak_sk":
+                ak = provider.get("access_key_id", "")
+                sk = provider.get("secret_access_key", "")
+                region = provider.get("region", "cn-beijing")
+                service = provider.get("service", "ark")
+                headers = self._sign_v4("POST", url, {}, body_str, ak, sk, region, service)
+            else:
+                api_key = provider.get("api_key", "")
+                if not api_key:
+                    continue
+                headers = {
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                }
+                extra = provider.get("headers", {})
+                if extra:
+                    headers.update(extra)
 
             logger.info(f"尝试 [{name}] 模型 [{api_model}]")
             try:
                 resp = requests.post(
                     url,
-                    json=payload,
+                    data=body_str,
                     headers=headers,
-                    timeout=kwargs.get("timeout", 60),
+                    timeout=kwargs.get("timeout", self.request_timeout),
                     stream=stream,
                 )
 
@@ -162,7 +385,8 @@ class APIGateway:
                     continue
 
                 self.current_provider = name
-                self.failed_providers.pop(name, None)
+                self.current_provider_display = provider.get("display", name)
+                self._breaker.record_success(name)
 
                 if stream:
                     tokens = self._estimate_tokens(messages)
@@ -202,27 +426,51 @@ class APIGateway:
 
     def get_status(self):
         available = self.get_available_providers()
+        breaker_detail = self._breaker.get_detail()
         return {
             "current_provider": self.current_provider,
             "available_providers": [p["name"] for p in available],
-            "failed_providers": list(self.failed_providers.keys()),
+            "failed_providers": self._breaker.get_failed_names(),
+            "circuit_breakers": breaker_detail,
             "providers_configured": [
                 {
                     "name": p["name"],
                     "display": p.get("display", p["name"]),
                     "model": p.get("model", ""),
                     "priority": p.get("priority", 99),
-                    "has_key": bool(p.get("api_key", "")),
+                    "has_key": self._has_creds(p),
+                    "auth_type": p.get("auth_type", "bearer"),
                 }
                 for p in self.providers
             ],
             "usage": self.usage,
         }
 
+    def is_ready(self):
+        """Readiness 检查：至少 1 个 provider 可用即就绪"""
+        available = self.get_available_providers()
+        return len(available) > 0
+
+    def health_detail(self):
+        """返回详细健康信息供 readiness 探针使用"""
+        available = self.get_available_providers()
+        failed_names = self._breaker.get_failed_names()
+        total = len(self.providers)
+        ready_count = len(available)
+        return {
+            "ready": ready_count > 0,
+            "total_providers": total,
+            "available_providers": ready_count,
+            "failed_providers": len(failed_names),
+            "available_names": [p["name"] for p in available],
+            "failed_names": failed_names,
+            "circuit_breakers": self._breaker.get_detail(),
+        }
+
     def list_models(self):
         models = []
         for p in self.providers:
-            if not p.get("api_key"):
+            if not self._has_creds(p):
                 continue
             models.append({
                 "id": p.get("model", "unknown"),
@@ -233,28 +481,30 @@ class APIGateway:
         return {"object": "list", "data": models}
 
     def reset_failures(self):
-        self.failed_providers = {}
-        logger.info("已重置所有提供商失败状态")
+        self._breaker.reset()
+        logger.info("已重置所有提供商熔断器状态")
 
 
 class _StreamWrapper:
     """包装流式响应，逐行产出 SSE data 内容"""
     def __init__(self, response):
+        response.encoding = 'utf-8'
         self._iterator = response.iter_lines(decode_unicode=True)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        line = next(self._iterator)
-        if not line:
-            return self.__next__()
-        if line.startswith("data: "):
-            chunk = line[6:]
-            if chunk.strip() == "[DONE]":
-                raise StopIteration
-            return chunk
-        return ""
+        while True:
+            line = next(self._iterator)
+            if not line:
+                continue
+            if line.startswith("data: "):
+                chunk = line[6:]
+                if chunk.strip() == "[DONE]":
+                    raise StopIteration
+                return chunk
+            return ""
 
 
 if __name__ == "__main__":

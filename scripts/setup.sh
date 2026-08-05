@@ -30,7 +30,7 @@ echo "  ✅ 依赖安装完成"
 echo "[3/4] 配置 API 提供商（直接回车可跳过该平台）"
 echo ""
 
-CONFIG_FILE="$HUB_DIR/config/providers.yaml"
+CONFIG_FILE="$HUB_DIR/config/chat.yaml"
 
 cat > "$CONFIG_FILE" << 'YAML_HEAD'
 # Free API Hub 提供商配置
@@ -109,28 +109,38 @@ echo "  ✅ 配置文件已生成: $CONFIG_FILE"
 
 # ---- Step 4: 验证 ----
 echo "[4/4] 验证配置..."
-./venv/bin/python -c "
+for cfg in config/chat.yaml config/code.yaml; do
+    if [ ! -f "$cfg" ]; then
+        echo "  ⏭️  $cfg 不存在，跳过验证"
+        continue
+    fi
+    ./venv/bin/python -c "
 import sys
 sys.path.insert(0, '$HUB_DIR/src')
 from gateway import APIGateway
 try:
-    gw = APIGateway()
+    gw = APIGateway(config_path='$HUB_DIR/$cfg')
     status = gw.get_status()
     configured = [p['name'] for p in status['providers_configured'] if p['has_key']]
     if configured:
-        print(f'  ✅ 已配置 {len(configured)} 个提供商: {\", \".join(configured)}')
+        print(f'  ✅ [$cfg] 已配置 {len(configured)} 个提供商: {\", \".join(configured)}')
     else:
-        print('  ❌ 未配置任何提供商')
+        print(f'  ❌ [$cfg] 未配置任何提供商')
         sys.exit(1)
 except Exception as e:
-    print(f'  ❌ 验证失败: {e}')
+    print(f'  ❌ [$cfg] 验证失败: {e}')
     sys.exit(1)
 " 2>&1
+done
 
 echo ""
 echo "========================================"
 echo "  🎉 安装完成！"
 echo "========================================"
+echo ""
+echo "已生成: config/chat.yaml"
+echo ""
+echo "如需配置编程实例，请编辑 config/code.yaml 填入 API Key"
 echo ""
 echo "启动网关："
 echo "  bash scripts/start.sh"
@@ -138,9 +148,16 @@ echo ""
 echo "停止网关："
 echo "  bash scripts/stop.sh"
 echo ""
+echo "单实例管理："
+echo "  bash scripts/start-chat.sh    # 仅聊天 (:5080)"
+echo "  bash scripts/start-code.sh    # 仅编程 (:5081)"
+echo "  bash scripts/stop-chat.sh"
+echo "  bash scripts/stop-code.sh"
+echo ""
 echo "安装守护进程（开机自启）："
 echo "  bash scripts/install_daemon.sh"
 echo ""
 echo "查看状态："
 echo "  curl http://127.0.0.1:5080/gateway/status"
+echo "  curl http://127.0.0.1:5081/gateway/status"
 echo ""
