@@ -281,9 +281,12 @@ def test_circuit_breaker_unit():
     assert state == "half_open", f"恢复超时后应为 half_open, 实际 {state}"
     assert cb.is_available("test"), "HALF_OPEN 状态应可被调用"
 
-    # HALF_OPEN 成功：回到 CLOSED
+    # HALF_OPEN 渐进恢复（FAILOVER-003）：连续 2 次成功才回 CLOSED
     cb.record_success("test")
-    assert cb.get_state("test") == "closed", f"HALF_OPEN 成功后应为 closed, 实际 {cb.get_state('test')}"
+    assert cb.get_state("test") == "half_open", \
+        f"第 1 次成功后应仍为 half_open(渐进恢复), 实际 {cb.get_state('test')}"
+    cb.record_success("test")
+    assert cb.get_state("test") == "closed", f"HALF_OPEN 连续 2 次成功后应为 closed, 实际 {cb.get_state('test')}"
 
     # 再次熔断并测试 HALF_OPEN 失败 → OPEN
     cb.record_failure("test")

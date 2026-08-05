@@ -62,7 +62,8 @@ class CircuitBreaker:
 
     def __init__(self, failure_threshold=3, recovery_timeout=60,
                  failure_rate_threshold=0.25, min_samples=10,
-                 window_seconds=60, cooldown_429=15, cooldown_5xx=60):
+                 window_seconds=60, cooldown_429=15, cooldown_5xx=60,
+                 half_open_success_threshold=2):
         self.failure_threshold = failure_threshold
         self.recovery_timeout = recovery_timeout
         self.failure_rate_threshold = failure_rate_threshold
@@ -70,7 +71,8 @@ class CircuitBreaker:
         self.window_seconds = window_seconds
         self.cooldown_429 = cooldown_429
         self.cooldown_5xx = cooldown_5xx
-        self._states = {}   # name -> {state, failure_count, last_failure_ts, cooldown}
+        self.half_open_success_threshold = half_open_success_threshold
+        self._states = {}   # name -> {state, failure_count, last_failure_ts, cooldown, half_open_success}
         self._samples = {}  # name -> deque[(ts, is_failure)]
         self._lock = threading.Lock()
 
@@ -122,8 +124,28 @@ class CircuitBreaker:
         with self._lock:
             return self._get_state(name)
 
+    def should_allow(self, name, probe_ratio=0.2):
+        """FAILOVER-003：渐进恢复放行判定
+
+        CLOSED → 100% 放行；OPEN → 拒绝；HALF_OPEN → 仅 probe_ratio(20%) 概率放行。
+        依赖 get_available_providers 在 call_api 每次请求时判定，实现流量渐进引入。
+        """
+        with self._lock:
+            state = self._get_state(name)
+            if state == self.CLOSED:
+                return True
+            if state == self.OPEN:
+                return False
+            import random
+            return random.random() < probe_ratio
+
     def record_success(self, name):
-        """记录成功：写入窗口样本，并按失败率触发熔断（DEGRADE-001）"""
+        """记录成功：写入窗口样本，并按失败率触发熔断（DEGRADE-001）
+
+        FAILOVER-003 渐进恢复：
+          - HALF_OPEN 状态累计连续成功，达 half_open_success_threshold(2) 次即转 CLOSED 全量恢复
+          - 窗口失败率仍超阈值 → 重新 OPEN（保守优先）
+        """
         with self._lock:
             now = time.time()
             samples = self._samples.setdefault(name, collections.deque())
@@ -136,9 +158,16 @@ class CircuitBreaker:
                     "failure_count": 0,
                     "last_failure_ts": 0,
                     "cooldown": self.recovery_timeout,
+                    "half_open_success": 0,
                 }
             if self._failure_rate(name, now) > self.failure_rate_threshold:
                 info["state"] = self.OPEN
+                info["half_open_success"] = 0
+            elif self._get_state(name) == self.HALF_OPEN:
+                info["half_open_success"] += 1
+                if info["half_open_success"] >= self.half_open_success_threshold:
+                    info["state"] = self.CLOSED
+                    info["half_open_success"] = 0
             else:
                 info["state"] = self.CLOSED
             self._states[name] = info
@@ -160,13 +189,15 @@ class CircuitBreaker:
                 "failure_count": 0,
                 "last_failure_ts": 0,
                 "cooldown": self.recovery_timeout,
+                "half_open_success": 0,
             })
             info["failure_count"] += 1
             info["last_failure_ts"] = now
             info["cooldown"] = self._cooldown_for(error_type)
-            if info["state"] == self.HALF_OPEN:
+            if self._get_state(name) == self.HALF_OPEN:
                 info["state"] = self.OPEN
                 info["failure_count"] = 0
+                info["half_open_success"] = 0
             elif info["failure_count"] >= self.failure_threshold:
                 info["state"] = self.OPEN
             elif self._failure_rate(name, now) > self.failure_rate_threshold:
@@ -335,10 +366,10 @@ class APIGateway:
             mtime = self.config_path.stat().st_mtime
         except OSError:
             return
-        if mtime == self._config_mtime:
+        if mtime == getattr(self, "_config_mtime", True):
             return
         now = time.time()
-        if now - self._config_reload_ts < 5:
+        if now - getattr(self, "_config_reload_ts", 0) < 5:
             return
         old_names = {p["name"] for p in getattr(self, "providers", [])}
         try:
@@ -467,6 +498,8 @@ class APIGateway:
             if not self._has_creds(p):
                 continue
             if not self._breaker.is_available(name):
+                continue
+            if not self._breaker.should_allow(name):
                 continue
             available.append(p)
         return available

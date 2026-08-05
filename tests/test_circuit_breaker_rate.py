@@ -67,7 +67,7 @@ def test_diff_cooldown():
 
 
 def test_half_open_recovery():
-    """TC-D4: 冷却到期转 HALF_OPEN，成功 → CLOSED"""
+    """TC-D4: 冷却到期转 HALF_OPEN，渐进恢复（FAILOVER-003）"""
     cb = CircuitBreaker(failure_threshold=3, recovery_timeout=1)
     for _ in range(3):
         cb.record_failure("p5")
@@ -75,7 +75,9 @@ def test_half_open_recovery():
     time.sleep(1.1)
     assert cb.get_state("p5") == "half_open", f"应 HALF_OPEN: {cb.get_state('p5')}"
     cb.record_success("p5")
-    assert cb.get_state("p5") == "closed", f"半开成功应 CLOSED: {cb.get_state('p5')}"
+    assert cb.get_state("p5") == "half_open", "渐进恢复第 1 次成功仍应 HALF_OPEN"
+    cb.record_success("p5")
+    assert cb.get_state("p5") == "closed", f"连续 2 次成功应 CLOSED: {cb.get_state('p5')}"
 
     # HALF_OPEN 失败 → 回 OPEN
     for _ in range(3):
@@ -83,7 +85,7 @@ def test_half_open_recovery():
     time.sleep(1.1)
     cb.record_failure("p5")  # HALF_OPEN 探测失败
     assert cb.get_state("p5") == "open", "半开失败应回 OPEN"
-    print("[PASS] TC-D4 半开恢复 — 成功 CLOSED / 失败回 OPEN")
+    print("[PASS] TC-D4 半开恢复 — 连续2次成功 CLOSED / 探测失败回 OPEN")
 
 
 def run_all():

@@ -81,6 +81,8 @@ def test_error_status_passthrough():
     api.gateway_cfg = {"retry_attempts": 1}
     api.retry_seconds = 15
     api.request_timeout = 30
+    api._config_mtime = api.config_path.stat().st_mtime
+    api._config_reload_ts = 9999999999
     api.providers = [
         {"name": "p1", "model": "m1", "endpoint": "https://x.com",
          "api_key": "k", "priority": 1},
@@ -90,7 +92,7 @@ def test_error_status_passthrough():
     api._breaker = gw.CircuitBreaker(3, 60)
     api.usage = {}
     api._lock = gw.threading.Lock()
-    api._mark_failed = lambda name: None
+    api._mark_failed = lambda name, error_type=None: None
     api._track = lambda name, tokens=0: None
 
     class FakeResp:

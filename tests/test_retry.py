@@ -34,6 +34,8 @@ def _make_gateway():
     api.gateway_cfg = {"retry_attempts": 3}
     api.retry_seconds = 15
     api.request_timeout = 30
+    api._config_mtime = api.config_path.stat().st_mtime
+    api._config_reload_ts = 9999999999
     api.providers = [
         {"name": "p1", "model": "m1", "endpoint": "https://x.com",
          "api_key": "k", "priority": 1},
@@ -43,7 +45,7 @@ def _make_gateway():
     api._breaker = gw.CircuitBreaker(3, 60)
     api.usage = {}
     api._lock = gw.threading.Lock()
-    api._mark_failed = lambda name: None
+    api._mark_failed = lambda name, error_type=None: None
     api._track = lambda name, tokens=0: None
     return api
 
@@ -130,7 +132,7 @@ def test_retry_exhausted():
     api = _make_gateway()
     calls = {"n": 0}
     marked = {"count": 0}
-    api._mark_failed = lambda name: marked.__setitem__("count", marked["count"] + 1)
+    api._mark_failed = lambda name, error_type=None: marked.__setitem__("count", marked["count"] + 1)
 
     original_post = gw.requests.post
     original_sleep = gw.time.sleep
