@@ -345,11 +345,25 @@ class APIGateway:
             u["last_used"] = datetime.datetime.now().isoformat()
             self._save_usage()
 
+    def _retry_delay(self, attempt):
+        """指数退避延迟：1s/2s/4s + jitter(±20%)，attempt 从 1 起"""
+        import random
+        base = 2 ** (attempt - 1)
+        return max(0.1, base + random.uniform(-0.2 * base, 0.2 * base))
+
+    def _retry_wait(self, resp, attempt):
+        """重试等待：优先上游 Retry-After 头，否则指数退避+jitter"""
+        retry_after = resp.headers.get("Retry-After")
+        if retry_after and retry_after.isdigit():
+            return float(retry_after)
+        return self._retry_delay(attempt)
+
     def call_api(self, messages, stream=False, model=None, **kwargs):
         providers = self.get_available_providers()
         if not providers:
             return {"error": "所有 API 提供商均不可用，请稍后重试或检查配置"}
 
+        max_retries = self.gateway_cfg.get("retry_attempts", 3)
         last_error = None
         for provider in providers:
             name = provider["name"]
@@ -386,61 +400,75 @@ class APIGateway:
                 if extra:
                     headers.update(extra)
 
-            logger.info(f"尝试 [{name}] 模型 [{api_model}]")
-            try:
-                resp = requests.post(
-                    url,
-                    data=body_str,
-                    headers=headers,
-                    timeout=kwargs.get("timeout", self.request_timeout),
-                    stream=stream,
-                )
+            for attempt in range(1, max_retries + 1):
+                logger.info(f"尝试 [{name}] 模型 [{api_model}] (第 {attempt}/{max_retries} 次)")
+                try:
+                    resp = requests.post(
+                        url,
+                        data=body_str,
+                        headers=headers,
+                        timeout=kwargs.get("timeout", self.request_timeout),
+                        stream=stream,
+                    )
 
-                if resp.status_code in (429, 401):
-                    logger.warning(f"[{name}] {resp.status_code}，切换下一家")
-                    self._mark_failed(name)
-                    last_error = f"{name}: {resp.status_code}"
-                    continue
-                if resp.status_code >= 500:
-                    logger.warning(f"[{name}] {resp.status_code} 服务端错误")
-                    self._mark_failed(name)
-                    last_error = f"{name}: {resp.status_code}"
-                    continue
-                if resp.status_code != 200:
-                    logger.warning(f"[{name}] {resp.status_code} 异常")
-                    self._mark_failed(name)
-                    last_error = f"{name}: {resp.status_code}"
-                    continue
+                    if resp.status_code == 401:
+                        logger.warning(f"[{name}] 401 认证错误，不重试")
+                        self._mark_failed(name)
+                        last_error = f"{name}: 401"
+                        break
+                    if resp.status_code == 429:
+                        if attempt < max_retries:
+                            wait = self._retry_wait(resp, attempt)
+                            logger.warning(f"[{name}] 429 限流，{wait:.1f}s 后重试")
+                            time.sleep(wait)
+                            continue
+                        logger.warning(f"[{name}] 429 重试耗尽")
+                        self._mark_failed(name)
+                        last_error = f"{name}: 429"
+                        break
+                    if resp.status_code >= 500:
+                        logger.warning(f"[{name}] {resp.status_code} 服务端错误，不重试")
+                        self._mark_failed(name)
+                        last_error = f"{name}: {resp.status_code}"
+                        break
+                    if resp.status_code != 200:
+                        logger.warning(f"[{name}] {resp.status_code} 异常")
+                        self._mark_failed(name)
+                        last_error = f"{name}: {resp.status_code}"
+                        break
 
-                self.current_provider = name
-                self.current_provider_display = provider.get("display", name)
-                self._breaker.record_success(name)
+                    self.current_provider = name
+                    self.current_provider_display = provider.get("display", name)
+                    self._breaker.record_success(name)
 
-                if stream:
-                    tokens = self._estimate_tokens(messages)
+                    if stream:
+                        tokens = self._estimate_tokens(messages)
+                        self._track(name, tokens)
+                        return _StreamWrapper(resp)
+
+                    data = resp.json()
+                    usage_info = data.get("usage", {})
+                    tokens = usage_info.get(
+                        "total_tokens", self._estimate_tokens(messages)
+                    )
                     self._track(name, tokens)
-                    return _StreamWrapper(resp)
+                    return data
 
-                data = resp.json()
-                usage_info = data.get("usage", {})
-                tokens = usage_info.get(
-                    "total_tokens", self._estimate_tokens(messages)
-                )
-                self._track(name, tokens)
-                return data
-
-            except requests.exceptions.Timeout:
-                logger.warning(f"[{name}] 超时")
-                self._mark_failed(name)
-                last_error = f"{name}: Timeout"
-            except requests.exceptions.ConnectionError:
-                logger.warning(f"[{name}] 连接失败")
-                self._mark_failed(name)
-                last_error = f"{name}: ConnectionError"
-            except Exception as e:
-                logger.warning(f"[{name}] {e}")
-                self._mark_failed(name)
-                last_error = f"{name}: {e}"
+                except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                    if attempt < max_retries:
+                        wait = self._retry_delay(attempt)
+                        logger.warning(f"[{name}] 瞬时错误({type(e).__name__})，{wait:.1f}s 后重试")
+                        time.sleep(wait)
+                        continue
+                    logger.warning(f"[{name}] 瞬时错误重试耗尽")
+                    self._mark_failed(name)
+                    last_error = f"{name}: {type(e).__name__}"
+                    break
+                except Exception as e:
+                    logger.warning(f"[{name}] {e}")
+                    self._mark_failed(name)
+                    last_error = f"{name}: {e}"
+                    break
 
         logger.error(f"全部 API 不可用，最后错误: {last_error}")
         return {"error": f"所有 API 均不可用: {last_error}"}

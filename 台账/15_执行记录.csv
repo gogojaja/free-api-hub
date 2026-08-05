@@ -17,3 +17,5 @@
 2026-08-05,M2,analyze_strategy,CHG-REQ-001 架构评估,✅
 2026-08-05,M2,role_reset,重置角色加载【架构设计师】,✅
 2026-08-05,M2,implement,NEW-004 配置快照落地(脚本+gateway._snapshot_config+测试),✅
+2026-08-05,M3,role_reset,重置角色加载【开发工程师】,✅
+2026-08-05,M3,develop,NEW-001 重试+指数退避实现+测试,✅
