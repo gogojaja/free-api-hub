@@ -2,3 +2,4 @@
 RISK-001,免费提供商下线/变更接口,高,多平台冗余 + failover；定期 risk_scan 巡检,开放
 RISK-002,API Key 泄露,中,.env 隔离 + .gitignore + 最小权限,开放
 RISK-003,用量记录损坏,低,备份 data/ 目录；JSON 原子写入,开放
+RISK-004,launchd 守护外部卷 TCC 权限（/Volumes 需 Full Disk Access）,中,系统设置→隐私与安全性→完全磁盘访问 添加 Python 解释器后重装；未授权期间用手动进程,开放

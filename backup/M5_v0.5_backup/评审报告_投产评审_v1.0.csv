@@ -1,0 +1,14 @@
+评审项,结果,依据/验证方式
+需求覆盖,✅ PASS,17 项需求全达成（docs/requirements.md 全 ✅，追溯矩阵 33 行断链 0%）
+CHG-REQ-001 变更项,✅ PASS,7 变更项全部落地（NEW-001~004/CONFIG-002/DEGRADE-001/FAILOVER-003），台账 16 开发追溯可查
+单元测试,✅ PASS,7 文件 24 用例 ALL PASS（配置快照/重试/429/热加载/熔断/渐进恢复/指标）
+集成回归,✅ PASS,8 套件 41 用例 ALL PASS（含回归套件 17 用例 TC-01~19），测试汇总_M4_集成回归.csv
+核心接口,✅ PASS,POST /v1/chat/completions（流式+非流式）、GET /v1/models 实测通过（TC-02/05/06）
+健康探针,✅ PASS,/health /health/live /health/ready 实测 200（TC-01/11/12），5080 当前 3/3 provider 可用
+可观测性,✅ PASS,/metrics Prometheus 文本公开只读，含 fah_requests_total/circuit_breaker/latency（TC-15/16）
+安全基线,✅ PASS,管理端点 Bearer 认证拒绝 401（TC-09）、配置文件无明文 Key（TC-10）、API Key 存 .env
+服务端口,✅ PASS,chat:5080 / code:5081 符合规范，未占用 5001/5002/5003
+配置文件,✅ PASS,config/chat.yaml + config/code.yaml 均有 model 配置、无明文 Key、含 ${ENV_VAR} 占位符
+launchd 守护,⚠️ 待核验,plist 模板已就绪（scripts/com.user.freeapihub.chat/code.plist），未安装，属本阶段核验项
+数据持久化,✅ PASS,data/usage.json 用量追踪正常（TC-03），配置快照 backup/ 自动备份
+评审结论,✅ 具备投产条件,需求/测试/安全三项门禁通过，launchd 守护安装后完成最终核验

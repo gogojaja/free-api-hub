@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.user.freeapihub</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__HUB_DIR__/venv/bin/python</string>
+        <string>__HUB_DIR__/src/server.py</string>
+        <string>5080</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>__HUB_DIR__</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>__HUB_DIR__/data/gateway.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>__HUB_DIR__/data/gateway.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+</dict>
+</plist>
