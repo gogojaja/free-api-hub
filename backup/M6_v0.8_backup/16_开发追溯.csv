@@ -1,0 +1,9 @@
+﻿需求ID,模块,文件,函数,测试用例
+REQ-DEGRADE-001,熔断,DEGRADE-001 失败率熔断 (已实现),gateway.py: CircuitBreaker (record_failure/_failure_rate/_cooldown_for),tests/test_circuit_breaker_rate.py TC-D1~D4
+REQ-CONFIG-002,配置,CONFIG-002 配置热加载 (已实现),gateway.py: _maybe_reload/_config_mtime/_config_reload_ts, tests/test_hot_reload.py TC-H1~H3
+REQ-FAILOVER-003,熔断,FAILOVER-003 渐进恢复 (已实现),gateway.py: should_allow/record_success(半开计数)/get_available_providers, tests/test_failover_recovery.py TC-F1~F4
+REQ-RETRY-001,网关,NEW-001 重试+指数退避 (已实现),gateway.py: call_api/_retry_delay/_retry_wait, tests/test_retry.py TC-R1~R3
+REQ-OBS-001,网关,NEW-002 可观测性指标 (已实现),server.py: /metrics + gateway.py: get_metrics_text/_percentile/_record_latency, tests/test_metrics.py TC-M1~M4
+REQ-RATE-001,网关,NEW-003 429 规范化 (已实现),server.py: _apply_rate_limit/_error_response + gateway.py: RateLimiter, tests/test_rate_limit.py TC-L1~L3
+REQ-CONFIG-004,配置,NEW-004 配置快照,gateway.py: _snapshot_config + scripts/backup_config.py, tests/test_backup_config.py TC-B1~B3
+M4-集成回归,测试,集成回归扩展 (M4),tests/test_regression.py TC-15~19 + tests/run_all_tests.py 统一调度(8套件41用例), tests/test_regression.py TC-15~TC-19 + 汇总 CSV
