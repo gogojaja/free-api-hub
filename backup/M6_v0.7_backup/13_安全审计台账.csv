@@ -1,0 +1,2 @@
+﻿操作ID,高危操作,回滚,留痕
+AUD-001,存量 xlsx 归档移动（SRS/评审 → backup/legacy_xlsx/）,回滚：从 backup/legacy_xlsx/ 恢复即可,2026-08-05 留痕
