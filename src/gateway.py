@@ -46,6 +46,20 @@ def _load_dotenv():
 _load_dotenv()
 
 
+def _percentile(sorted_values, q):
+    """线性插值分位数（NEW-002 直方图）"""
+    values = sorted(sorted_values)
+    if not values:
+        return 0.0
+    if len(values) == 1:
+        return values[0]
+    pos = q * (len(values) - 1)
+    low = int(pos)
+    high = min(low + 1, len(values) - 1)
+    frac = pos - low
+    return values[low] * (1 - frac) + values[high] * frac
+
+
 class CircuitBreaker:
     """熔断器：CLOSED → OPEN → HALF_OPEN → CLOSED（失败率熔断，DEGRADE-001）
 
@@ -295,6 +309,7 @@ class APIGateway:
         except OSError:
             self._config_mtime = 0
         self._config_reload_ts = time.time()
+        self._latency_samples = []
 
     @staticmethod
     def _resolve_env(value):
@@ -520,6 +535,17 @@ class APIGateway:
             u["last_used"] = datetime.datetime.now().isoformat()
             self._save_usage()
 
+    def _record_latency(self, t0):
+        """NEW-002：记录单次调用延迟（monotonic 秒）到内存，供 /metrics 直方图"""
+        elapsed = time.monotonic() - t0
+        with self._lock:
+            samples = getattr(self, "_latency_samples", None)
+            if samples is None:
+                return
+            samples.append(elapsed)
+            if len(samples) > 1000:
+                del samples[: len(samples) - 1000]
+
     def _retry_delay(self, attempt):
         """指数退避延迟：1s/2s/4s + jitter(±20%)，attempt 从 1 起"""
         import random
@@ -534,6 +560,7 @@ class APIGateway:
         return self._retry_delay(attempt)
 
     def call_api(self, messages, stream=False, model=None, **kwargs):
+        _t0 = time.monotonic()
         providers = self.get_available_providers()
         if not providers:
             return {"error": "所有 API 提供商均不可用，请稍后重试或检查配置"}
@@ -620,6 +647,7 @@ class APIGateway:
                     self.current_provider = name
                     self.current_provider_display = provider.get("display", name)
                     self._breaker.record_success(name)
+                    self._record_latency(_t0)
 
                     if stream:
                         tokens = self._estimate_tokens(messages)
@@ -664,6 +692,68 @@ class APIGateway:
             text = str(msg.get("content", ""))
             total += len(text) * 1.5
         return int(total)
+
+    def get_metrics_text(self):
+        """NEW-002：Prometheus 文本格式指标（GET /metrics）
+
+        公开只读（用户已确认）。数据源：usage 持久化 + 内存延迟样本 + 熔断器状态。
+        指标：fah_requests_total / fah_tokens_total / fah_errors_total（label=provider）、
+              fah_circuit_breaker_state(0/1)、fah_available_providers、
+              fah_http_latency_seconds（直方图）。
+        """
+        lines = [
+            "# HELP fah_requests_total 网关累计请求数（按提供商）",
+            "# TYPE fah_requests_total counter",
+        ]
+        with self._lock:
+            usage = dict(self.usage)
+            latencies = list(self._latency_samples)
+        for name, u in sorted(usage.items()):
+            name = name.replace('"', '\\"')
+            lines.append(f'fah_requests_total{{provider="{name}"}} {u.get("total_requests", 0)}')
+        lines.extend([
+            "# HELP fah_tokens_total 网关累计 token 用量（按提供商）",
+            "# TYPE fah_tokens_total counter",
+        ])
+        for name, u in sorted(usage.items()):
+            name = name.replace('"', '\\"')
+            lines.append(f'fah_tokens_total{{provider="{name}"}} {u.get("total_tokens", 0)}')
+        lines.extend([
+            "# HELP fah_errors_total 网关累计错误数（按提供商）",
+            "# TYPE fah_errors_total counter",
+        ])
+        for name, u in sorted(usage.items()):
+            name = name.replace('"', '\\"')
+            lines.append(f'fah_errors_total{{provider="{name}"}} {u.get("errors", 0)}')
+
+        lines.extend([
+            "# HELP fah_circuit_breaker_state 熔断器状态（0=closed/1=open，1=不可用）",
+            "# TYPE fah_circuit_breaker_state gauge",
+        ])
+        detail = self._breaker.get_detail()
+        for name, d in sorted(detail.items()):
+            name = name.replace('"', '\\"')
+            val = 1 if d["state"] == "open" else 0
+            lines.append(f'fah_circuit_breaker_state{{provider="{name}"}} {val}')
+        available = self.get_available_providers()
+        lines.extend([
+            "# HELP fah_available_providers 当前可用提供商数",
+            "# TYPE fah_available_providers gauge",
+            f"fah_available_providers {len(available)}",
+        ])
+
+        lines.extend([
+            "# HELP fah_http_latency_seconds 网关调用延迟（秒）",
+            "# TYPE fah_http_latency_seconds summary",
+        ])
+        if latencies:
+            avg = sum(latencies) / len(latencies)
+            lines.append(f"fah_http_latency_seconds{{quantile=\"0.5\"}} {_percentile(latencies, 0.5):.6f}")
+            lines.append(f"fah_http_latency_seconds{{quantile=\"0.95\"}} {_percentile(latencies, 0.95):.6f}")
+            lines.append(f"fah_http_latency_seconds{{quantile=\"0.99\"}} {_percentile(latencies, 0.99):.6f}")
+            lines.append(f"fah_http_latency_seconds_sum {sum(latencies):.6f}")
+            lines.append(f"fah_http_latency_seconds_count {len(latencies)}")
+        return "\n".join(lines) + "\n"
 
     def get_status(self):
         self._maybe_reload()

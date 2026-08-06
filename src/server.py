@@ -156,6 +156,19 @@ def list_models():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/metrics", methods=["GET"])
+def metrics():
+    """NEW-002 可观测性指标：Prometheus 文本格式，公开只读"""
+    if gateway is None:
+        return Response("fah_gateway_ready 0\n", mimetype="text/plain; version=0.0.4")
+    try:
+        return Response(gateway.get_metrics_text(),
+                        mimetype="text/plain; version=0.0.4")
+    except Exception as e:
+        return Response(f"# error: {e}\n", status=500,
+                        mimetype="text/plain; version=0.0.4")
+
+
 @app.route("/gateway/status", methods=["GET"])
 @require_auth
 def gateway_status():
@@ -221,6 +234,7 @@ def run_server(config_path=None):
     logger.info(f"  配置: {config_path or 'config/providers.yaml'}")
     logger.info(f"  POST /v1/chat/completions — OpenAI 兼容接口")
     logger.info(f"  GET  /v1/models          — 可用模型列表")
+    logger.info(f"  GET  /metrics            — Prometheus 指标(公开只读)")
     logger.info(f"  GET  /gateway/status      — 网关状态")
     logger.info(f"  POST /gateway/reset       — 重置失败状态")
     logger.info(f"  GET  /health/live         — Liveness 探针")
