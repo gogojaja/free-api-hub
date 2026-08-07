@@ -1,0 +1,11 @@
+﻿编号,需求,类型,优先级,判定,依据
+REQ-SEC-SANDBOX-001,沙箱隔离（Agent 层）,功能,P0,去掉,Agent 层 v3.0 已移除，条件失效死需求
+REQ-SEC-DATA-004,get_status 不暴露 Key,安全,P1,去掉,标注待移除，v3.3 安全整改后 Key 已 .env 隔离
+REQ-DEGRADE-002,缓存降级,功能,P2,去掉(降P3),免费网关缓存收益低+陈旧响应风险，降 P3 评估
+REQ-DEGRADE-001,熔断器,功能,P1,修改,改按失败率动态熔断(1min>25%)+429/5xx 差异处理
+REQ-CONFIG-002,配置热加载,功能,P1,修改,改显式 reload 端点/TTL 缓存，禁每请求重读
+REQ-FAILOVER-003,失败重置,功能,P1,修改,增冷却到期渐进恢复权重，非全量恢复
+NEW-001,请求重试+指数退避,功能,P0,增加,LiteLLM 基础可靠性：瞬时失败重试 2-3 次 backoff
+NEW-002,可观测性指标端点,非功能,P1,增加,/metrics Prometheus：延迟/错误率/fallback/用量
+NEW-003,429 响应规范化,功能,P1,增加,限流返回 429+Retry-After+X-RateLimit-* 头
+NEW-004,配置版本快照,功能,P2,增加,重载前备份，损坏可回滚

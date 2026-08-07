@@ -1,0 +1,8 @@
+﻿变更项,类型,架构方案,涉及文件,实现难度,状态,依据
+DEGRADE-001 失败率熔断,修改,将现有计数熔断升级为失败率熔断：维护 1min 滑动窗口失败率，>25% 开路；429 与 5xx 差异化 cooldown（429 短/5xx 长）,src/gateway.py,中,待架构阶段实现,整改方案 D-S03 已含 CircuitBreaker 雏形 + Azure Circuit Breaker 模式
+CONFIG-002 配置热加载,修改,弃每次请求重读 YAML；改为 config 变更 mtime 检测 + 5s TTL 缓存，变更时重载并自动备份旧版,src/gateway.py,低,待实现,LiteLLM 生产配置实践：避免每请求磁盘 IO
+FAILOVER-003 渐进恢复,修改,冷却到期后：先 20% 流量试探（低权重引入），连续 2 次成功再全量恢复；替代当前全量立即恢复,src/gateway.py,中,待实现,LiteLLM cooldown 渐进 re-introduce
+NEW-001 重试+指数退避,增加,瞬时失败（429/超时/连接错误）重试 2-3 次，backoff 1s/2s/4s + jitter；5xx/401 不重试直接 failover,src/gateway.py,低,待实现,LiteLLM Router retries + exponential backoff
+NEW-002 可观测性指标,增加,新增 GET /metrics 输出 Prometheus 文本格式：请求延迟直方图/错误率/fallback 次数/用量；数据源复用现有 usage 记录,src/server.py + src/gateway.py,中,待实现,LiteLLM 路线图观测性 + 生产 LLM 网关基准
+NEW-003 429 规范化,增加,网关自身限流时返回 429 + Retry-After 头 + X-RateLimit-Limit/Remaining/Reset 头,src/server.py,低,待实现,APISIX 网关限流规范
+NEW-004 配置快照,增加,config 重载/修改前自动备份至 backup/config_v<N>.yaml，损坏可回滚,src/gateway.py + scripts,低,待实现,项目 backup/ 目录规范延伸

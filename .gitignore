@@ -8,3 +8,4 @@ data/usage.json
 .env
 config/*.yaml.local
 backup/config_v*.yaml
+backup/pre_push_secret_cleanup/

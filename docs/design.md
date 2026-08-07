@@ -218,8 +218,8 @@ Readiness 响应体示例：
 | v3.3 | **安全整改 + 质量修复**：API Key 移至环境变量(.env)；管理端点增加 Bearer Token 认证；移除 Agent 层(agent.py RCE 漏洞)；_StreamWrapper 递归改 while 循环；failed_providers/usage 增加 threading.Lock 线程保护；配置文件支持 `${ENV_VAR}` 占位符；gateway.py 增加 _load_dotenv() 自动加载 .env；回归测试新增 TC-09(认证拒绝)/TC-10(无明文Key) |
 | v3.4 | **深度健康检查**：拆分 `/health` 为 `/health/live`(Liveness) + `/health/ready`(Readiness) 双探针；Readiness 反映 provider 可用性详情(总数/可用/失败/名称)；gateway.py 新增 `is_ready()` / `health_detail()` 方法；回归测试新增 TC-11(Liveness)/TC-12(Readiness) |
 | v3.5 | **架构变更设计（CHG-REQ-001）**：7 变更项纳入架构资产（§9），含失败率熔断 DEGRADE-001、配置热加载 CONFIG-002、渐进恢复 FAILOVER-003、重试退避 NEW-001、可观测性指标 NEW-002、429 规范化 NEW-003、配置快照 NEW-004；仅设计落地，代码实现属 M3 |
-| v3.6 | **M4 集成回归（CHG-REQ-001 验证）**：回归套件由 12 扩展至 17 用例——TC-15/16(/metrics 公开只读与指标完整性)、TC-17(熔断器详情结构)、TC-18(重试→熔断→冷却→半开→渐进恢复全生命周期集成)、TC-19(429 规范化链路)；新增 run_all_tests.py 统一调度 8 套件 41 用例（单元 24 + 集成回归 17），汇总表 `测试汇总_M4_集成回归.csv`（UTF-8 BOM） |
-| v3.7 | **M5 投产（Go-Live 评审 + 运维交接）**：Go-Live 评审 PASS（需求 17 全✅ / 变更 7 落地 / 测试 41 用例 / 安全门禁通过），产出 `评审报告_投产评审_v1.0.csv`；launchd 守护根因确认=macOS 26 TCC「可移动卷」类别对 CLI 二进制无 GUI 授权入口（完全磁盘访问不覆盖外部卷），确认平台限制不可用，生产用手动进程（Terminal 继承可移动卷权限），RISK-004 已缓解；新增 `docs/运维手册.md` |
+| v3.6 | **M4 集成回归（CHG-REQ-001 验证）**：回归套件由 12 扩展至 17 用例——TC-15/16(/metrics 公开只读与指标完整性)、TC-17(熔断器详情结构)、TC-18(重试→熔断→冷却→半开→渐进恢复全生命周期集成)、TC-19(429 规范化链路)；新增 run_all_tests.py 统一调度 8 套件 41 用例（单元 24 + 集成回归 17），汇总表 `reports/测试汇总_M4_集成回归.csv`（UTF-8 BOM） |
+| v3.7 | **M5 投产（Go-Live 评审 + 运维交接）**：Go-Live 评审 PASS（需求 17 全✅ / 变更 7 落地 / 测试 41 用例 / 安全门禁通过），产出 `reports/评审报告_投产评审_v1.0.csv`；launchd 守护根因确认=macOS 26 TCC「可移动卷」类别对 CLI 二进制无 GUI 授权入口（完全磁盘访问不覆盖外部卷），确认平台限制不可用，生产用手动进程（Terminal 继承可移动卷权限），RISK-004 已缓解；新增 `docs/运维手册.md` |
 | v3.8 | **M6 收尾（stage_close 项目结项）**：17 台账收尾归档全补全（10 成本 4.5 人*日 / 11 缺陷 D-S01~08 全整改 / 09 进度补 M3~M6 / 13 审计 AUD-002 / 14 门禁收尾 PASS / 17 收尾归档 9 交付物+经验总结）；交接文档终态；备份 backup/M6_v0.8_backup/ + git 提交 |
 
 ## 8. 配置操作入口
