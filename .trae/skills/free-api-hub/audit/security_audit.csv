@@ -1,0 +1,5 @@
+timestamp,action,provider,result,detail
+2026-08-27T10:16:54Z,add_provider,newprov,ok,"base_url=https://api.newprov.com/v1 models=model-a,model-b"
+2026-08-27T10:16:54Z,set_api_key,testprov,ok,/var/folders/x_/g3lj3gm14jx2n1njkjcjgxlh0000gp/T/tmp8i7si0f0/testprov-api-key
+2026-08-27T10:17:05Z,add_provider,newprov,ok,"base_url=https://api.newprov.com/v1 models=model-a,model-b"
+2026-08-27T10:17:05Z,set_api_key,testprov,ok,/var/folders/x_/g3lj3gm14jx2n1njkjcjgxlh0000gp/T/tmpzwo_mn4v/testprov-api-key

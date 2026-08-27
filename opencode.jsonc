@@ -1,0 +1,19 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "paths": [
+      ".trae/skills"
+    ]
+  },
+  "mcp": {
+    "freeApiHub": {
+      "type": "local",
+      "command": ["python3", ".trae/skills/free-api-hub/mcp/server.py"],
+      "enabled": true,
+      "environment": {
+        "START_MCP_TIMEOUT_MS": "60000",
+        "RUN_MCP_TIMEOUT_MS": "300000"
+      }
+    }
+  }
+}
