@@ -1,0 +1,31 @@
+# 非生产环境组 IaC 声明（dev + test 共用平台，逻辑细分）
+# 端口来自 台账/20_环境配置.csv（单一真实源）：dev=30000+/test=30100+
+# 密钥经 env_file 注入，仅别名，禁止明文
+version: "3.8"
+
+services:
+  gateway-dev:
+    image: free-api-hub:${FREE_API_HUB_IMAGE_TAG:-latest}
+    env_file:
+      - ../../.env.nonprod
+    environment:
+      - FREE_API_HUB_ENV=nonprod
+      - SLOT=dev
+    ports:
+      - "30000:30000"   # 网关 Web API (dev)
+      - "30001:30001"   # 管理 Admin API (dev)
+    volumes:
+      - ./dev:/data
+
+  gateway-test:
+    image: free-api-hub:${FREE_API_HUB_IMAGE_TAG:-latest}
+    env_file:
+      - ../../.env.nonprod
+    environment:
+      - FREE_API_HUB_ENV=nonprod
+      - SLOT=test
+    ports:
+      - "30100:30100"   # 网关 Web API (test)
+      - "30101:30101"   # 管理 Admin API (test)
+    volumes:
+      - ./test:/data

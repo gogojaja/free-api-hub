@@ -5,7 +5,7 @@ api.free-api-hub.example,port,gw-web-prod,prod,8080,-,-,free-api-hub,registered,
 localhost,port,admin-dev,nonprod-dev,30001,-,-,free-api-hub,registered,P3,管理Admin API(dev)
 localhost,port,admin-test,nonprod-test,30101,-,-,free-api-hub,registered,P3,管理Admin API(test)
 api.free-api-hub.example,port,admin-prod,prod,8081,-,-,free-api-hub,registered,P1,管理Admin API(生产)
-localhost,port,state-dev,nonprod-dev,30002,-,-,free-api-hub,registered,P3,状态存储sqlite(dev)
-localhost,port,state-test,nonprod-test,30102,-,-,free-api-hub,registered,P3,状态存储sqlite(test)
+localhost,port,state-dev,nonprod-dev,-,-,-,free-api-hub,registered,P3,状态存储本地文件(无端口)
+localhost,port,state-test,nonprod-test,-,-,-,free-api-hub,registered,P3,状态存储本地文件(无端口)
 api.free-api-hub.example,port,state-prod,prod,5432,-,-,free-api-hub,registered,P1,状态存储集群PG(生产)
 localhost,mcp,freeApiHub,nonprod/prod,-,-,-,free-api-hub,registered,P2,"本地MCP子进程(stdio,无端口)"

@@ -2,7 +2,7 @@
 网关BASE_URL,服务地址,nonprod,http://localhost:30000,http://localhost:30100,https://api.free-api-hub.example,非生产30000~39999/生产8000~8999,非生产组共用平台,开发者读写/运维只读,开发,N,-
 网关Web API端口,连接,nonprod,30000,30100,8080(网关映射),非生产30000~39999/生产8000~8999,端口硬隔离,开发者/运维只读,开发,N,-
 管理Admin API端口,连接,nonprod,30001,30101,8081,同上,端口硬隔离,开发/运维,开发,N,-
-配置/状态存储,连接,nonprod,本地sqlite:30002,本地sqlite:30102,集群PG:5432,卷名 free-api-hub-{envGroup}-{svc},数据卷隔离,运维,部署,N,-
+配置/状态存储,连接,nonprod,-,-,5432(集群PG),卷名 free-api-hub-{envGroup}-{svc},数据卷隔离,运维,部署,N,-
 API Key别名(各provider),认证,nonprod/prod,引用别名,引用别名,引用别名,-,"经.secrets注入,不入库",运维只读,部署/测试,Y(别名非明文),{file:~/.config/opencode/<provider>-api-key}
 功能开关FeatureFlag,开关,nonprod,on(调试日志),on,受控灰度,-,非生产组共用,开发者,开发,N,-
 MCP freeApiHub,工具,nonprod/prod,本地子进程,本地子进程,本地子进程,"stdio,无端口",进程级隔离,开发者/运维,开发,N,-

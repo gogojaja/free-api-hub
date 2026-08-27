@@ -22,5 +22,6 @@
 - 所有端口/资源注册 CMDB（`台账/25_环境资源清单.csv`，先注册先得；多项目冲突升阶仲裁）。已登记：网关/管理/状态存储 在 dev(30000+offset)/test(30100+offset)/prod(8080/8081/5432)，MCP 为 stdio 无端口。
 
 ## 检查（门禁）
-- `check_gate` 比对 `20_环境配置.csv` ↔ 实际运行（端口监听/数据目录/卷名），不一致即阻断。
+- **环境即代码（IaC）**：`environments/nonprod/docker-compose.yml` 与 `environments/prod/docker-compose.yml` 声明期望态，纳入版本控制。
+- **三态比对防漂移**：`environments/check_env_drift.py` 比对 `20_环境配置.csv`(登记态) ↔ IaC(期望态) ↔ 实际运行(现实态)，不一致即阻断（`--actual` 比对监听端口）。
 - 冒烟在对应环境通过后，才允许推进/发布。

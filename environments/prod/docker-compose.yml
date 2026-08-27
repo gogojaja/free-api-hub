@@ -1,0 +1,21 @@
+# 生产环境组 IaC 声明（独立部署，变更须 CAB/回滚预案）
+# 端口来自 台账/20_环境配置.csv：生产 8080(网关映射)/8081(管理)
+# 状态存储为外部集群 PG（5432，不在本声明内），密钥经 env_file 注入（仅别名）
+version: "3.8"
+
+services:
+  gateway:
+    image: free-api-hub:${FREE_API_HUB_IMAGE_TAG:-latest}
+    env_file:
+      - ../../.env.prod
+    environment:
+      - FREE_API_HUB_ENV=prod
+    ports:
+      - "8080:8080"   # 网关 Web API (生产网关映射)
+      - "8081:8081"   # 管理 Admin API (生产)
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+    # 状态存储：外部集群 PG（5432），不在此容器化；生产不重构建（build once, promote）
