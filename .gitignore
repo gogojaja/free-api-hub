@@ -1,11 +1,29 @@
+# Python / 通用
 venv/
 __pycache__/
 *.pyc
 .DS_Store
-config/providers.yaml
-data/usage.json
+_dist/
 *.log
+
+# 密钥与本地敏感文件（铁律 §3 A 级：禁止入库）
+.secrets/
+*.api-key
+*-api-key
 .env
+.env.*
+!.env.nonprod.example
+!.env.prod.example
+
+# 环境隔离数据卷（非生产/生产各自独立，不入库）
+environments/*/data/
+environments/*/secrets/
+
+# 网关运行态本地配置
+config/providers.yaml
 config/*.yaml.local
+data/usage.json
+
+# 备份与密钥清理产物
 backup/config_v*.yaml
 backup/pre_push_secret_cleanup/

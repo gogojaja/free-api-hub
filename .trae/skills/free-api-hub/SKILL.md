@@ -48,13 +48,22 @@ description: 免费API聚合网关的开发与运维技能：当用户要接入�
 ## 6. 目录结构
 ```
 free-api-hub/
+├── 台账/20_环境配置.csv        # 3 环境(dev/test/prod)单一真实源
+├── environments/               # 双套环境组 nonprod(dev+test)/prod
+├── .env.nonprod.example / .env.prod.example  # 密钥别名示例
 ├── .trae/skills/free-api-hub/
 │   ├── SKILL.md
-│   ├── domain/{api_catalog,key_vault,health_check,config_schema}.md
+│   ├── domain/{api_catalog,key_vault,health_check,config_schema,environment}.md
 │   ├── mcp/{server.py,tools_impl.py,tests/test_server.py}
 │   └── audit/security_audit.csv
 └── .opencode/agents/free-api-hub.md
 ```
+
+## 7. 三套环境（dev / test / prod）
+按 DevProjectTeamSkill 环境标准：双环境组拓扑（nonprod=dev+test 共用平台，prod 独立）。
+- 配置单一真实源：`台账/20_环境配置.csv`（端口区间/共用边界/权限角色/密钥别名）。
+- 密钥仅存别名，经 `.secrets/` 注入，禁入库（铁律 §3 A 级）。
+- 详细见 `domain/environment.md`。
 
 ## 闭环执行系统
 
