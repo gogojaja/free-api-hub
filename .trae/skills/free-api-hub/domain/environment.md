@@ -19,7 +19,7 @@
 ## 密钥与 RBAC
 - key 仅存别名（`{file:~/.config/opencode/<provider>-api-key}`），真实值经 `.secrets/` 注入，禁入库。
 - 开发者：nonprod 读写、prod 只读；运维：prod 唯一写权限（管线化 + break-glass 留痕）。
-- 所有端口/资源注册 CMDB（`25_环境资源清单.csv`，先注册先得；多项目冲突升阶仲裁）。
+- 所有端口/资源注册 CMDB（`台账/25_环境资源清单.csv`，先注册先得；多项目冲突升阶仲裁）。已登记：网关/管理/状态存储 在 dev(30000+offset)/test(30100+offset)/prod(8080/8081/5432)，MCP 为 stdio 无端口。
 
 ## 检查（门禁）
 - `check_gate` 比对 `20_环境配置.csv` ↔ 实际运行（端口监听/数据目录/卷名），不一致即阻断。
