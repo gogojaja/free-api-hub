@@ -1,5 +1,7 @@
 timestamp,action,provider,result,detail
-2026-08-27T10:16:54Z,add_provider,newprov,ok,"base_url=https://api.newprov.com/v1 models=model-a,model-b"
-2026-08-27T10:16:54Z,set_api_key,testprov,ok,/var/folders/x_/g3lj3gm14jx2n1njkjcjgxlh0000gp/T/tmp8i7si0f0/testprov-api-key
-2026-08-27T10:17:05Z,add_provider,newprov,ok,"base_url=https://api.newprov.com/v1 models=model-a,model-b"
-2026-08-27T10:17:05Z,set_api_key,testprov,ok,/var/folders/x_/g3lj3gm14jx2n1njkjcjgxlh0000gp/T/tmpzwo_mn4v/testprov-api-key
+2026-08-27T22:49:08Z,fix_opencode_provider,opencode.jsonc,ok,修复 opencode provider 缺失的 npm/models 字段
+2026-08-28T03:12:13Z,register_provider,modelscope,ok,登记 ModelScope 免费API: baseURL=https://modelscope.cn/api/v1, models=deepseek-r1/qwen3.5/gemma/llama
+2026-08-28T03:56:11Z,register_provider,moonshot,ok,登记 月之暗面Kimi 免费API: baseURL=https://api.moonshot.cn/v1, models=moonshot-v1-8k/32k/128k
+2026-08-28T03:56:11Z,set_api_key,moonshot,ok,写入 moonshot-api-key(0600), 明文不回显
+2026-08-28T06:10:28Z,set_api_key,moonshot,ok,"更新有效key并验证 api.moonshot.cn/v1 -> HTTP 200 (明文不回显, 文件0600)"
+2026-08-28T16:37:31Z,update_config,all,"按官方API上下文修正 10 模型 limit（ctx/out）；备份 .bak.20260829_context"

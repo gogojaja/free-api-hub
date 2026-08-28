@@ -62,10 +62,12 @@ class TestKeyVault(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         os.environ["OPENCE_HOME"] = self.tmp
         os.environ["OPENCE_CONFIG"] = os.path.join(self.tmp, "opencode.jsonc")
+        os.environ["OPENCE_AUDIT"] = os.path.join(self.tmp, "security_audit.csv")
 
     def tearDown(self):
         os.environ.pop("OPENCE_HOME", None)
         os.environ.pop("OPENCE_CONFIG", None)
+        os.environ.pop("OPENCE_AUDIT", None)
 
     def test_set_api_key_permissions_and_no_plaintext(self):
         res = T.set_api_key("testprov", "SECRET123")
@@ -85,11 +87,13 @@ class TestConfigAppendSafety(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         os.environ["OPENCE_HOME"] = self.tmp
         os.environ["OPENCE_CONFIG"] = os.path.join(self.tmp, "opencode.jsonc")
+        os.environ["OPENCE_AUDIT"] = os.path.join(self.tmp, "security_audit.csv")
         Path(os.environ["OPENCE_CONFIG"]).write_text(json.dumps({"provider": {}}), encoding="utf-8")
 
     def tearDown(self):
         os.environ.pop("OPENCE_HOME", None)
         os.environ.pop("OPENCE_CONFIG", None)
+        os.environ.pop("OPENCE_AUDIT", None)
 
     def test_add_provider_valid(self):
         res = T.add_provider("newprov", "https://api.newprov.com/v1", "model-a,model-b", "newprov")
@@ -107,12 +111,144 @@ class TestConfigAppendSafety(unittest.TestCase):
         res = T.add_provider("Bad Name", "https://api.x.com/v1", "m")
         self.assertFalse(res["ok"])
 
+    def test_add_provider_rejects_existing(self):
+        T.add_provider("dupprov", "https://api.x.com/v1", "m1")
+        res = T.add_provider("dupprov", "https://api.y.com/v1", "m2")
+        self.assertFalse(res["ok"])
+        cfg = T.load_config()
+        self.assertEqual(cfg["provider"]["dupprov"]["options"]["baseURL"], "https://api.x.com/v1")
+
+    def test_add_provider_rejects_protected(self):
+        res = T.add_provider("opencode", "https://opencode.ai/zen/v1", "big-pickle")
+        self.assertFalse(res["ok"])
+        self.assertIn("保护区", res["error"])
+
+    def test_add_provider_preserves_comments(self):
+        raw = (
+            '{\n'
+            '  // 顶层注释：手工调优配置，勿删\n'
+            '  "provider": {\n'
+            '    /* 块注释 */\n'
+            '    "zhipu": {\n'
+            '      "options": {"baseURL": "https://z.example.com/v1"}\n'
+            '    }\n'
+            '    // 尾部注释\n'
+            '  }\n'
+            '}\n'
+        )
+        Path(os.environ["OPENCE_CONFIG"]).write_text(raw, encoding="utf-8")
+        res = T.add_provider("newprov", "https://api.new.com/v1", "m1")
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["write_mode"], "preserved")
+        new_raw = Path(os.environ["OPENCE_CONFIG"]).read_text(encoding="utf-8")
+        # 注释全部保留
+        self.assertIn("// 顶层注释：手工调优配置，勿删", new_raw)
+        self.assertIn("/* 块注释 */", new_raw)
+        self.assertIn("// 尾部注释", new_raw)
+        # 新条目已写入且原条目未被改动
+        cfg = T.load_config()
+        self.assertIn("newprov", cfg["provider"])
+        self.assertEqual(cfg["provider"]["zhipu"]["options"]["baseURL"], "https://z.example.com/v1")
+
 
 class TestCatalog(unittest.TestCase):
     def test_catalog_search(self):
         res = T.catalog_search("glm")
         self.assertTrue(res["ok"])
         self.assertGreaterEqual(res["count"], 1)
+
+
+class TestModelLimits(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        os.environ["OPENCE_HOME"] = self.tmp
+        os.environ["OPENCE_CONFIG"] = os.path.join(self.tmp, "opencode.jsonc")
+        os.environ["OPENCE_AUDIT"] = os.path.join(self.tmp, "security_audit.csv")
+
+    def tearDown(self):
+        os.environ.pop("OPENCE_HOME", None)
+        os.environ.pop("OPENCE_CONFIG", None)
+        os.environ.pop("OPENCE_AUDIT", None)
+
+    def _write_cfg(self, raw):
+        Path(os.environ["OPENCE_CONFIG"]).write_text(raw, encoding="utf-8")
+
+    def test_toml_limit_parse(self):
+        text = (
+            'name = "big-pickle"\n'
+            '[limit]\n'
+            'context = 200000\n'
+            'output = 32000\n'
+            '[tag]\nkind = "zen"\n'
+        )
+        lim = T._toml_limit(text)
+        self.assertEqual(lim, {"context": 200000, "output": 32000})
+        self.assertIsNone(T._toml_limit("# no limit block"))
+
+    def test_check_model_limits(self):
+        self._write_cfg(json.dumps({
+            "provider": {"demo": {"models": {
+                "m-a": {"limit": {"context": 9999, "output": 128}},
+                "m-b": {"limit": {"context": 131072, "output": 8192}},
+                "m-no": {},
+            }}},
+        }))
+        fake = {
+            "m-a": ({"context": 200000, "output": 32000}, "models.dev/demo"),
+            "m-b": ({"context": 131072, "output": 8192}, "models.dev/demo"),
+            "m-no": (None, None),
+        }
+        orig = T._official_limits
+        T._official_limits = lambda p, m, d="": fake.get(m, (None, None))
+        try:
+            res = T.check_model_limits("demo")
+        finally:
+            T._official_limits = orig
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["summary"], {"match": 1, "diff": 1, "no_official": 1})
+        by = {r["model"]: r for r in res["rows"]}
+        self.assertEqual(by["m-a"]["status"], "diff")
+        self.assertEqual(by["m-b"]["status"], "match")
+        self.assertEqual(by["m-no"]["status"], "no_official")
+
+    def test_update_model_limit_preserves_comments(self):
+        raw = (
+            '{\n'
+            '  // 手工调优配置，勿删\n'
+            '  "provider": {\n'
+            '    "demo": {\n'
+            '      "models": {\n'
+            '        "m-a": {\n'
+            '          "name": "m-a",\n'
+            '          "limit": { "context": 9999, "output": 128 }\n'
+            '        }\n'
+            '      }\n'
+            '    }\n'
+            '  }\n'
+            '}\n'
+        )
+        self._write_cfg(raw)
+        res = T.update_model_limit("demo", "m-a", context=200000, output=32000)
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["mode"], "preserved")
+        self.assertTrue(res["backup"])
+        self.assertTrue(Path(res["backup"]).exists())
+        new_raw = Path(os.environ["OPENCE_CONFIG"]).read_text(encoding="utf-8")
+        self.assertIn("// 手工调优配置，勿删", new_raw)
+        cfg = T.load_config()
+        self.assertEqual(cfg["provider"]["demo"]["models"]["m-a"]["limit"],
+                         {"context": 200000, "output": 32000})
+
+    def test_update_model_limit_validates(self):
+        self._write_cfg(json.dumps({"provider": {"demo": {"models": {}}}}))
+        res = T.update_model_limit("Bad Name", "m-a", context=1)
+        self.assertFalse(res["ok"])
+        res = T.update_model_limit("demo", "m-a", context=-5)
+        self.assertFalse(res["ok"])
+        res = T.update_model_limit("demo", "m-a")
+        self.assertFalse(res["ok"])
+        res = T.update_model_limit("demo", "m-a", context=1, output=None)
+        self.assertFalse(res["ok"])  # m-a 未配置
 
 
 if __name__ == "__main__":

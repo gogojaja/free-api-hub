@@ -27,6 +27,10 @@ description: 免费API聚合网关的开发与运维技能：当用户要接入�
 - `health_check(provider, model?)` — 探测可达性/延迟（SSR 防护）
 - `list_api_keys()` / `set_api_key(provider, key)` — key 别名管理（脱敏、0600）
 - `add_provider(name, base_url, models, key_alias)` — 按模板登记（高危、强校验）
+- `check_model_limits(provider?, model?, dev_slug?)` — 只读：按官方来源（models.dev / OpenRouter API）核对各模型 limit 差异（context/output）
+- `update_model_limit(provider, model, context?, output?)` — 高危：修正本地模型 limit（先备份 + 登记审计，须确认）
+
+CLI 等价入口：`python3 mcp/model_limits_cli.py check [provider [model]]` / `... update <provider> <model> --context N [--output N]`。
 
 ## 3. Agent 协作
 配套 Agent `free-api-hub`（`.opencode/agents/free-api-hub.md`）：承接网关开发任务，调用上述 MCP 工具完成接入/路由/健康动作，按下方模型档位建议选档。
@@ -42,6 +46,7 @@ description: 免费API聚合网关的开发与运维技能：当用户要接入�
 ## 5. 铁律（安全与边界）
 - **key 安全**：明文只落 `~/.config/opencode/<provider>-api-key`，权限 0600；任何日志/返回不回显明文（铁律 §3 A 级）。
 - **SSRF 防护**：`health_check` 仅允许 http(s) 且禁止私网/回环/链路本地地址。
+- **配置保护（最高优先级）**：全局 `~/.config/opencode/opencode.jsonc` **禁止任何会话/Agent 手改**。新增 provider 仅能经 MCP `add_provider`（对已存在 provider 自动拒绝覆盖）；`opencode`（OpenCode Zen）provider 为**保护区**，任何工具/会话不得改动其 `npm`/`options`/`models` 字段。
 - **外部文件授权**：写全局 `opencode.jsonc` 必须先备份 + 用户确认 + 登记 `audit/security_audit.csv`。
 - **双平台兼容**：路径用 `os.path`/`$HOME`，行尾 LF。
 
