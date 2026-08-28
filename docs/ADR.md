@@ -169,5 +169,49 @@
 
 ---
 
+## ADR-008：智能路由 · 统一模型别名层（增加）
+
+**状态**：已接受（设计）| 实现归智能路由特性
+
+**背景**：`call_api` 当前忽略客户端 `model` 字段、按 priority 顺序尝试；`/v1/models` 暴露裸下游模型名，客户端与具体 provider/模型强耦合，更换 provider 需改客户端。
+
+**决策**：新增叠加式别名层。
+- `gateway.routing.aliases` 定义对外稳定别名（`fah/chat-free` 等）→ 标签筛选候选池。
+- `resolve(model)`：命中 alias.name→按 tags 交集取候选池（交集为空退化为全池）；**空 model / 未知 model / 裸下游模型名（如 opencode 占位 `free-api-hub`）→ 一律退化为全池（=现状全池 failover，不钉死单 provider，避免削弱 opencode 的 failover）**。仅 alias 驱动新选路。
+- `/v1/models` 前置别名条目；`hide_raw` 可仅展示别名。
+- `routing.enabled=false` 完全回退现状。
+
+**备选方案**：
+- A. 直接改造 `call_api` 用客户端 model 选路 → 破坏现状「指定模型」语义与零回归保障，拒绝（采用叠加层）。
+- B. 引入 LiteLLM 作为路由依赖 → 超出本项目轻量自托管定位、新增重依赖，拒绝（手写等效实现）。
+
+**后果**：实现复杂度低；客户端与下游解耦；选路仅作用于候选池顺序/过滤，既有 failover/熔断/重试内核不变。
+
+**依据**：LiteLLM `model_group_alias` + `model_name` 用户态别名、`/v1/models` 展示（docs.litellm.ai/docs/proxy/load_balancing，T2 vendor doc，2026-08-29）。
+
+---
+
+## ADR-009：智能路由 · 能力打分选路（增加）
+
+**状态**：已接受（设计）| 实现归智能路由特性
+
+**背景**：纯 priority 选路无法按请求语义/模型能力（context 窗口/工具调用/延迟）择优，低质 provider 可能与高质 provider 等权。
+
+**决策**：每 provider 增加 `capabilities`（context_window/output_limit/supports_tools/tags）。
+- 策略 `priority`（默认=现状）/ `capability` / `latency`。
+- `capability`：pre_call 估算 prompt 过滤 context 超限者；打分（tools+100、大窗口加分、轻微优先级加权）取最优。
+- `latency`：按每 provider EWMA 延迟升序（需 `_record_latency` 小幅埋点）。
+- 候选池先经 `CircuitBreaker` 可用性过滤，复用既有 per-provider 重试/熔断逻辑。
+
+**备选方案**：
+- A. 实现 cost-based 策略 → 本项目全免费（cost=0）无意义，拒绝（不实现）。
+- B. Redis 共享健康/延迟态 → 超出单实例轻量定位，拒绝（内存态，与现状一致）。
+
+**后果**：实现复杂度中；选路可解释（响应头 `X-Provider-Name` 透出实际 provider）；`default_strategy=priority` 保证零回归。
+
+**依据**：LiteLLM `routing_strategy`（latency/cost 等）、`model_info.context_window`、`enable_pre_call_checks`（docs.litellm.ai/docs/routing，T2 vendor doc，2026-08-29）。
+
+---
+
 **文档版本**：v1.0
-**最后更新**：2026-08-05
+**最后更新**：2026-08-29（追加 ADR-008/009 智能路由）

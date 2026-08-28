@@ -8,6 +8,18 @@ gateway:
   failure_threshold: 3    # 连续失败次数阈值，达到后熔断
   timeout: 30
   log: data/chat.log
+  # 智能路由（ADR-008/009）：叠加式，不影响既有 failover；hide_raw=false 保留裸模型名
+  routing:
+    enabled: true
+    default_strategy: priority
+    hide_raw: false
+    aliases:
+      - name: fah/chat-free
+        tags: [chat]
+        strategy: capability
+      - name: fah/light
+        tags: [lightweight]
+        strategy: priority
 
 providers:
   - name: zhipu
@@ -16,6 +28,11 @@ providers:
     model: glm-4.7
     priority: 1
     api_key: ${ZHIPU_API_KEY}
+    capabilities:
+      context_window: 128000
+      output_limit: 4096
+      supports_tools: true
+      tags: [chat]
 
   - name: zhipu-fast
     display: 智谱 GLM-4.5-Air (快速)
@@ -23,6 +40,11 @@ providers:
     model: glm-4.5-air
     priority: 2
     api_key: ${ZHIPU_API_KEY}
+    capabilities:
+      context_window: 128000
+      output_limit: 4096
+      supports_tools: true
+      tags: [chat, lightweight]
 
   - name: openrouter
     display: OpenRouter Free (兜底)
@@ -30,6 +52,11 @@ providers:
     model: openrouter/free
     priority: 3
     api_key: ${OPENROUTER_API_KEY}
+    capabilities:
+      context_window: 128000
+      output_limit: 4096
+      supports_tools: false
+      tags: [chat, lightweight]
     headers:
       HTTP-Referer: http://localhost:5080
       X-Title: Free-API-Hub

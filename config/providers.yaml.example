@@ -4,6 +4,15 @@
 gateway:
   port: 5080
   retry_seconds: 60  # 提供商失败后等待秒数再重试
+  # 智能路由（可选，ADR-008/009）：叠加式，不影响既有 failover
+  routing:
+    enabled: true
+    default_strategy: priority   # priority | capability | latency
+    hide_raw: false              # true 时 /v1/models 仅展示别名
+    aliases:
+      - name: fah/chat-free
+        tags: [chat]
+        strategy: capability
 
 providers:
   - name: openrouter
@@ -12,6 +21,11 @@ providers:
     model: deepseek/deepseek-v4-flash:free
     priority: 1
     api_key: YOUR_OPENROUTER_API_KEY
+    capabilities:               # 能力元数据（智能路由用，可缺省）
+      context_window: 128000
+      output_limit: 4096
+      supports_tools: false
+      tags: [chat, lightweight]
     headers:
       HTTP-Referer: http://localhost:5080
       X-Title: Free-API-Hub

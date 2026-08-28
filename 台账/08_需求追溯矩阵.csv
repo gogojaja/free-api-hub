@@ -32,3 +32,5 @@ REQ-RETRY-001,CHG-REQ-001 NEW-001,gateway.py: call_api() 重试+指数退避 (�
 REQ-OBS-001,CHG-REQ-001 NEW-002,gateway.py + server.py: /metrics (待实现),GET /metrics,—,—,design.md §9.6 + ADR-005
 REQ-RATE-001,CHG-REQ-001 NEW-003,server.py: 429 规范化 (待实现),POST /v1/chat/completions,—,—,design.md §9.7 + ADR-006
 REQ-CONFIG-005,CHG-REQ-001 NEW-004,gateway.py + scripts: 配置快照 (待实现),—,backup/config_v<N>.yaml,—,design.md §9.8 + ADR-007
+REQ-SR-001,改进方向§6.1 智能路由,智能路由·统一别名层,GET /v1/models (别名展示),—,tests/test_routing.py,design_smart_routing.md §4 + ADR-008
+REQ-SR-002,改进方向§6.1 智能路由,智能路由·能力打分选路,POST /v1/chat/completions (model=alias),—,tests/test_routing.py,design_smart_routing.md §4 + ADR-009

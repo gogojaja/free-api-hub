@@ -1,0 +1,11 @@
+﻿视角,原则,结论,说明,建议
+架构,叠加式非破坏设计,PASS,别名层仅作用于候选池顺序/过滤，failover/熔断/重试内核不变；enabled=false 全回退现状,落地时复用既有 call_api 外层循环，避免重写
+架构,向后兼容,PASS,当前 model 字段本不参与选路，未知/空 model 退化为现状 priority-failover,回归测试需覆盖"指定裸 model"原语义
+可追溯性,REQ/ADR/代码三方一致,INFO,已建 ADR-008/009，但《需求-架构-代码追溯矩阵.csv》未补 REQ/ADR 链接行,落地前补 traceability 矩阵行（REQ-SR-001 ↔ ADR-008/009）
+安全,密钥不泄露,PASS,别名仅映射模型名，不暴露 api_key；写回(G4)留人工门禁不在 MVP,保持 G4 默认关闭
+可测试性,测试用例覆盖,PASS,已规划 test_routing 单测 + test_regression 扩展 + 实网冒烟,落地后确保既有 41 用例全绿再合入
+可运维,回滚与可观测,PASS,enabled=false 回退；X-Provider-Name 已透出实际 provider,建议在 /metrics 增 route_strategy 标签便于排障
+性能,路由开销,PASS,capability 打分 O(n)、latency EWMA 内存可忽略,避免引入 Redis/跨进程态（与现状一致）
+双平台,平台兼容,PASS,纯 python 实现，无硬编码路径/命令,保持 LF 行尾
+成本,大批量阈值,PASS,落地改动 <20 文件、<50K token，未触铁律#9 大批量预警,如扩大范围（含 G4）需重新评估
+风险,空池/误配置,PASS,resolve 交集为空退化为全池；加载期校验 alias.tags 存在性并降级,warning 需进入日志便于运维发现

@@ -18,6 +18,7 @@ import collections
 import requests
 import yaml
 from pathlib import Path
+from routing import Router
 
 logger = logging.getLogger(__name__)
 
@@ -310,6 +311,8 @@ class APIGateway:
             self._config_mtime = 0
         self._config_reload_ts = time.time()
         self._latency_samples = []
+        self._provider_latency = {}
+        self._router = Router(self.gateway_cfg.get("routing"), self.providers)
 
     @staticmethod
     def _resolve_env(value):
@@ -392,6 +395,7 @@ class APIGateway:
             self._config_mtime = mtime
             self._config_reload_ts = now
             self._snapshot_config()
+            self._router = Router(self.gateway_cfg.get("routing"), self.providers)
             new_names = {p["name"] for p in self.providers}
             removed = old_names - new_names
             for name in removed:
@@ -519,6 +523,20 @@ class APIGateway:
             available.append(p)
         return available
 
+    def _resolve_route(self, model, available, messages, kwargs):
+        """智能路由解析（ADR-008/009）：返回 call_api 应遍历的 provider 有序列表。
+
+        非 alias（含 opencode 的占位 "free-api-hub"）→ 原样返回 available（=现状）。
+        """
+        router = getattr(self, "_router", None)
+        if router is None or not router.enabled:
+            return available
+        ctx = {
+            "tools": bool((kwargs or {}).get("tools")),
+            "est_tokens": self._estimate_tokens(messages),
+        }
+        return router.resolve(model, available, ctx)
+
     def _mark_failed(self, name, error_type="5xx"):
         self._breaker.record_failure(name, error_type=error_type)
         with self._lock:
@@ -535,8 +553,9 @@ class APIGateway:
             u["last_used"] = datetime.datetime.now().isoformat()
             self._save_usage()
 
-    def _record_latency(self, t0):
-        """NEW-002：记录单次调用延迟（monotonic 秒）到内存，供 /metrics 直方图"""
+    def _record_latency(self, t0, name=None):
+        """NEW-002：记录单次调用延迟（monotonic 秒）到内存，供 /metrics 直方图；
+        并按 provider 维护 EWMA（ADR-009 latency 策略用）。"""
         elapsed = time.monotonic() - t0
         with self._lock:
             samples = getattr(self, "_latency_samples", None)
@@ -545,6 +564,13 @@ class APIGateway:
             samples.append(elapsed)
             if len(samples) > 1000:
                 del samples[: len(samples) - 1000]
+            if name:
+                ewma = self._provider_latency.get(name, elapsed)
+                ewma = 0.7 * ewma + 0.3 * elapsed
+                self._provider_latency[name] = ewma
+                router = getattr(self, "_router", None)
+                if router is not None:
+                    router.set_latency(name, ewma)
 
     def _retry_delay(self, attempt):
         """指数退避延迟：1s/2s/4s + jitter(±20%)，attempt 从 1 起"""
@@ -561,14 +587,17 @@ class APIGateway:
 
     def call_api(self, messages, stream=False, model=None, **kwargs):
         _t0 = time.monotonic()
-        providers = self.get_available_providers()
-        if not providers:
+        available = self.get_available_providers()
+        if not available:
             return {"error": "所有 API 提供商均不可用，请稍后重试或检查配置"}
+
+        # 智能路由（ADR-008/009）：仅 alias 驱动新选路；其余保持现状全池 failover
+        route = self._resolve_route(model, available, messages, kwargs)
 
         max_retries = self.gateway_cfg.get("retry_attempts", 3)
         last_error = None
         last_status = None
-        for provider in providers:
+        for provider in route:
             name = provider["name"]
             auth_type = provider.get("auth_type", "bearer")
 
@@ -647,7 +676,7 @@ class APIGateway:
                     self.current_provider = name
                     self.current_provider_display = provider.get("display", name)
                     self._breaker.record_success(name)
-                    self._record_latency(_t0)
+                    self._record_latency(_t0, name)
 
                     if stream:
                         tokens = self._estimate_tokens(messages)
@@ -802,6 +831,11 @@ class APIGateway:
     def list_models(self):
         self._maybe_reload()
         models = []
+        router = getattr(self, "_router", None)
+        if router is not None and router.enabled:
+            models.extend(router.alias_entries())
+            if router.hide_raw:
+                return {"object": "list", "data": models}
         for p in self.providers:
             if not self._has_creds(p):
                 continue
