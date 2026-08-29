@@ -10,7 +10,7 @@ openrouter,deepseek/deepseek-v4-pro-0813,0.00000066,0.00000198,,1048576,,https:/
 openrouter,deepseek/deepseek-v4-pro-0813:batch,0.00000132,0.00000396,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.8-max,0.000002,0.000006,,1000000,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,~deepseek/deepseek-v4-flash-latest,0.00000003,0.0000001,,1310720,,https://openrouter.ai/api/v1/models,2026-08-29
-openrouter,deepseek/deepseek-v4-flash-0731,0.000000045,0.00000009,,1310720,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-v4-flash-0731,0.000000065,0.00000018,,1310720,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,deepseek/deepseek-v4-flash-0731:batch,0.00000014,0.00000028,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.7-flash,0.00000003,0.00000013,,1000000,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.7-plus,0.00000032,0.00000128,,1000000,,https://openrouter.ai/api/v1/models,2026-08-29
@@ -20,8 +20,8 @@ openrouter,qwen/qwen3.6-flash,0.0000001875,0.000001125,,1000000,,https://openrou
 openrouter,qwen/qwen3.6-35b-a3b,0.0000001,0.0000009,,262144,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.6-max-preview,0.000001027,0.000006162,,262144,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.6-27b,0.0000006,0.0000036,,262144,,https://openrouter.ai/api/v1/models,2026-08-29
-openrouter,deepseek/deepseek-v4-pro,0.00000057942,0.00000115884,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
-openrouter,deepseek/deepseek-v4-flash,0.00000008316,0.00000016632,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-v4-pro,0.000000538878,0.000001077756,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-v4-flash,0.00000008176,0.00000016352,,1048576,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.6-plus,0.000000325,0.00000195,,1000000,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.5-9b,0.0000001,0.00000015,,262144,,https://openrouter.ai/api/v1/models,2026-08-29
 openrouter,qwen/qwen3.5-9b:batch,0.00000017,0.00000025,,262144,,https://openrouter.ai/api/v1/models,2026-08-29
