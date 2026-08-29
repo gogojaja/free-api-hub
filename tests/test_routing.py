@@ -77,6 +77,26 @@ class TestRouter(unittest.TestCase):
         self.assertEqual(len(entries), 4)
         self.assertTrue(all(e["provider"] == "*" and "alias" in e for e in entries))
 
+    def test_manual_override_pin_by_provider(self):
+        r = Router({**ROUTING, "manual_override": "p2"}, PROVIDERS)
+        out = r.resolve("any-model", self.available)
+        self.assertEqual([p["name"] for p in out], ["p2"])
+
+    def test_manual_override_pin_by_raw_model_id(self):
+        r = Router({**ROUTING, "manual_override": "m1"}, PROVIDERS)
+        out = r.resolve("free-api-hub", self.available)
+        self.assertEqual([p["name"] for p in out], ["p1"])
+
+    def test_manual_override_unknown_degrades_to_full(self):
+        r = Router({**ROUTING, "manual_override": "nope"}, PROVIDERS)
+        out = r.resolve("any-model", self.available)
+        self.assertEqual([p["name"] for p in out], ["p1", "p2", "p3"])
+
+    def test_manual_override_wins_over_alias(self):
+        r = Router({**ROUTING, "manual_override": "p2"}, PROVIDERS)
+        out = r.resolve("fah/chat", self.available)
+        self.assertEqual([p["name"] for p in out], ["p2"])  # override 优先于 alias
+
 
 class TestGatewayRouting(unittest.TestCase):
     def setUp(self):

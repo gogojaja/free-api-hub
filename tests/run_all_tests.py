@@ -25,7 +25,7 @@ SUITES = [
     ("单元测试 DEGRADE-001 失败率熔断", "tests/test_circuit_breaker_rate.py", 4),
     ("单元测试 FAILOVER-003 渐进恢复", "tests/test_failover_recovery.py", 4),
     ("单元测试 NEW-002 可观测性指标", "tests/test_metrics.py", 4),
-    ("单元测试 智能路由 ADR-008/009", "tests/test_routing.py", 11),
+    ("单元测试 智能路由 ADR-008/009/010", "tests/test_routing.py", 13),
     ("集成回归 回归套件(需 5080)", "tests/test_regression.py", 17),
 ]
 

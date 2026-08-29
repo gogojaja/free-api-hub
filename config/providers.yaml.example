@@ -4,11 +4,14 @@
 gateway:
   port: 5080
   retry_seconds: 60  # 提供商失败后等待秒数再重试
-  # 智能路由（可选，ADR-008/009）：叠加式，不影响既有 failover
+  # 智能路由（可选，ADR-008/009 + ADR-010）：叠加式，不影响既有 failover
   routing:
     enabled: true
     default_strategy: priority   # priority | capability | latency
     hide_raw: false              # true 时 /v1/models 仅展示别名
+    # ADR-010 manual_override：钉死单个 provider（provider名/裸模型ID/alias名均可）。
+    # 空字符串 = 不启用；未命中任意可用 provider 时自动退化为全池（安全兜底）。
+    manual_override: ""
     aliases:
       - name: fah/chat-free
         tags: [chat]

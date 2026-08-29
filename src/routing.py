@@ -25,6 +25,9 @@ class Router:
             self.default_strategy = "priority"
         self.hide_raw = bool(routing_cfg.get("hide_raw", False))
 
+        # ADR-010 manual_override：可填 provider 名 / 裸模型ID / alias 名，空则停用
+        self.manual_override = (routing_cfg.get("manual_override") or "").strip()
+
         self.aliases = {}
         for a in (routing_cfg.get("aliases") or []):
             name = a.get("name")
@@ -52,6 +55,28 @@ class Router:
 
         self._latency = {}  # name -> EWMA 秒
 
+    def _resolve_manual_override(self, available):
+        """ADR-010：manual_override 钉死单 provider（> alias > priority）。
+
+        匹配顺序：provider 名 → 裸模型ID → alias 名。
+        未命中 → 返回 None（调用方退化为全池并告警）。
+        """
+        mo = self.manual_override
+        if not mo:
+            return None
+        for p in available:
+            if p.get("name") == mo:
+                return p
+        for p in available:
+            if p.get("model") == mo:
+                return p
+        if mo in self.aliases:
+            tags = set(self.aliases[mo]["tags"])
+            for p in available:
+                if tags and set(self._caps.get(p["name"], {}).get("tags", [])) & tags:
+                    return p
+        return None
+
     @staticmethod
     def _normalize_caps(c):
         c = c or {}
@@ -77,10 +102,23 @@ class Router:
         """返回 call_api 应遍历的 provider 有序列表。
 
         available: 已通过 breaker/creds 过滤的 provider 列表（priority 顺序）。
-        非 alias（含 opencode 的 "free-api-hub"）→ 原样返回 available（现状语义）。
+        仲裁链（ADR-010）：manual_override > 显式命中 alias > priority/capability > 全池。
+        非 alias（含 opencode 的 "free-api-hub"）→ 无 override 时原样返回 available。
         """
         ctx = ctx or {}
-        if not self.enabled or not model or model not in self.aliases:
+        if not self.enabled or not available:
+            return available
+
+        mo = self._resolve_manual_override(available)
+        if mo is not None:
+            logger.info(f"manual_override 命中 {mo['name']}，钉死单 provider")
+            return [mo]
+        if self.manual_override:
+            logger.warning(
+                f"manual_override {self.manual_override!r} 未命中任何可用 provider，退化为全池"
+            )
+
+        if not model or model not in self.aliases:
             return available
 
         alias = self.aliases[model]

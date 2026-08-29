@@ -12,6 +12,8 @@ gateway:
     enabled: true
     default_strategy: priority
     hide_raw: false
+    # ADR-010 manual_override：钉死单 provider（provider名/裸模型ID/alias名），空=不启用
+    manual_override: ""              # 例：code.yaml 手动指定 DeepSeek 时填 "openrouter"
     aliases:
       - name: fah/code-x
         tags: [code]
