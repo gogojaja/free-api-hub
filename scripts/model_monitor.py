@@ -10,6 +10,7 @@
 DEBUG 日志：--debug 开启。
 """
 import argparse
+import os
 import csv
 import json
 import logging
@@ -26,6 +27,7 @@ LEDGERS = {
 }
 
 # 平台白名单（铁律：仅公共 HTTPS 合法域）
+ALLOWED_DOMAINS = ("openrouter.ai", "models.dev", "api-docs.deepseek.com")
 PLATFORMS = [
     {"name": "openrouter", "url": "https://openrouter.ai/api/v1/models", "field": "data"},
     {"name": "models.dev", "url": "https://models.dev/api.json", "field": ""},
@@ -83,19 +85,34 @@ def main():
     rows = []
     for p in PLATFORMS:
         url = p["url"]
-        if not url.startswith("https://") or "openrouter.ai" not in url:
+        if not url.startswith("https://"):
+            logger.warning("跳过非 HTTPS %s", url)
+            continue
+        host = url.split("/")[2]
+        if host not in ALLOWED_DOMAINS:
             logger.warning("跳过非法域 %s", url)
             continue
         data = _get_json(url)
         rows.extend(snapshot_openrouter(data))
 
     logger.info("抓取 %d 条 DeepSeek/Qwen 模型价格记录", len(rows))
+
+    # 官方价保护：合并手工维护的官方基价行（来源=api-docs.deepseek.com），防覆盖丢失
+    off = []
+    if os.path.exists(LEDGERS["price"]):
+        with open(LEDGERS["price"], encoding="utf-8-sig") as f:
+            for r in csv.DictReader(f):
+                if r.get("来源T1") == "https://api-docs.deepseek.com/quick_start/pricing":
+                    off.append(r)
+    merged = off + rows
+    logger.info("合并后 %d 行（官方 %d + 平台 %d）", len(merged), len(off), len(rows))
+
     if args.write:
         with open(LEDGERS["price"], "w", encoding="utf-8-sig", newline="") as f:
-            w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+            w = csv.DictWriter(f, fieldnames=list(merged[0].keys()))
             w.writeheader()
-            w.writerows(rows)
-        logger.info("已写入 %s", LEDGERS["price"])
+            w.writerows(merged)
+        logger.info("已写入 %s（%d 行）", LEDGERS["price"], len(merged))
     return 0
 
 
