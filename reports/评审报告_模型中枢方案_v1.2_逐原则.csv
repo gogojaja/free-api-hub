@@ -1,0 +1,12 @@
+﻿perspective,check_id,check_name,status,severity,evidence,confidence
+architect,ARCH-005,台账24/26/27字段契约,PASS,,模型价格/优惠日历/免费额度三台账字段契约已定义，含T1来源+核验日期,high
+architect,ARCH-006,仲裁链完整性,PASS,,manual_override>alias>priority>全池failover，兼容opencode裸模型fallback,high
+architect,ARCH-007,时间段调度切分,PASS,,schedule归二期智能路由，一期仅manual_override，叠加非破坏(ADR-008/009不变),high
+architect,ARCH-008,监测脚本与台账联动,PASS,,model_monitor.py每周三查+diff周报+额度耗尽ACTION列，驱动调换模型,medium
+security,SEC-004,监测脚本密钥安全,PASS,,只读公共API/官方文档，零密钥落盘，额度与价格非涉密,high
+security,SEC-005,周报审计留痕,PASS,,每周报告入13安全审计台账AUD留痕+铁律#9闸门,high
+security,SEC-006,优惠结束时间强制登记,PASS,,优惠日历字段含结束时间且核验日期必填,high
+cost,COST-005,每周监测成本预算,PASS,high,估算≤1K token/巡，远低于节省，监测不超成本预警阈值,high
+cost,COST-006,免费额度可支撑调模型决策,PASS,high,刷新周期+额度量+current_state字段直接支撑及时调换(证据:方案v1.2字段契约),high
+cost,COST-003,夜间折扣T1核验,DEFERRED,high,移交阶段①官方文档核验(证据:INSUFFICIENT),medium
+cost,COST-004,国产免费档额度实测,DEFERRED,high,SiliconFlow页面JS渲染静态不可抓，改API核验移交阶段①(证据:2026-08-29实测可达性探测),medium

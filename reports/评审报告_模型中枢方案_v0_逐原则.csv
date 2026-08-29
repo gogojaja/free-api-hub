@@ -1,0 +1,12 @@
+﻿perspective,check_id,check_name,status,severity,evidence,confidence
+architect,ARCH-001,复用现有routing底座,PASS,,已存在routing.py(ADR-008/009)且chat.yaml已启用 aliases fah/chat-free+fah/light,high
+architect,ARCH-002,manual_override契约定义,FAIL,high,方案未定义manual_override与alias/priority叠加规则与冲突仲裁优先级,medium
+architect,ARCH-003,时段调度落地点,FAIL,high,方案含时段×任务×模型矩阵但routing.py无time-aware策略，缺实现路径,medium
+architect,ARCH-004,双主模型路由边界,FAIL,medium,未定义DeepSeek/Qwen在alias层的tag划分与互选规则,medium
+security,SEC-001,密钥注入安全,PASS,,provider密钥走环境变量别名注入(chat.yaml api_key ${X}),high
+security,SEC-002,价格台账涉密检查,PASS,,模型价格非涉密；平台URL公网，无A/B级敏感,high
+security,SEC-003,成本预警审计留痕,FAIL,medium,铁律#9要求超阈值任务先登记台账40_大模型成本台账并触发select_model，方案未含该闸门,high
+cost,COST-001,免费档反信号,PASS,high,OpenRouter实测DeepSeek/Qwen免费档=0(官方API 2026-08-29)，免费优先必须转向国产平台(证据:OpenRouter /api/v1/models),high
+cost,COST-002,最低价档锚定,PASS,high,DeepSeek v4-flash-latest $0.03/M in $0.10/M out 为OpenRouter当前最低(证据:OpenRouter官方API),high
+cost,COST-003,夜间折扣核验,FAIL,high,DeepSeek官方夜间折扣未做T1来源核验，时段矩阵依赖该数据(证据:INSUFFICIENT),medium
+cost,COST-004,国产免费档调研缺口,FAIL,high,方案平台空间虽列SiliconFlow/百炼/智谱但未启动实测，免费额度数据INSUFFICIENT,medium

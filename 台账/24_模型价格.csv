@@ -1,0 +1,12 @@
+﻿平台,模型,输入价($/M),输出价($/M),缓存命中($/M),context,output,夜间折扣,来源T1,核验日期
+openrouter,deepseek/deepseek-v4-flash-latest,0.03,0.10,,1310720,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-v4-flash,0.0834,0.1669,,1048576,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-v3.2,0.27,0.4,,163840,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,deepseek/deepseek-chat,0.2574,1.0287,,163840,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,qwen/qwen3.7-flash,0.03,0.13,,1000000,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,qwen/qwen3.5-9b,0.10,0.15,,262144,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,qwen/qwen3.8-flash,0.15,0.47,,1000000,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,qwen/qwen3-coder,0.30,1.00,,262144,,,https://openrouter.ai/api/v1/models,2026-08-29
+openrouter,qwen/qwen3-coder-flash,0.195,0.975,,1000000,,,https://openrouter.ai/api/v1/models,2026-08-29
+deepseek官方,deepseek-v4-flash,0.44(峰)/0.22(谷),1.32(峰)/0.66(谷),0.014/0.022(缓存命中),1000000,384000,非高峰=半价,https://api-docs.deepseek.com/quick_start/pricing,2026-08-29
+deepseek官方,deepseek-v4-pro,1.32(峰)/0.66(谷),3.96(峰)/1.98(谷),0.022(缓存命中),1000000,384000,非高峰=半价,https://api-docs.deepseek.com/quick_start/pricing,2026-08-29
