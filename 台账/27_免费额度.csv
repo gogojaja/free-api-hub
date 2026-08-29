@@ -5,4 +5,5 @@ siliconflow,deepseek-ai/DeepSeek-V3.2-Exp,免费模型(API实测),无固定额�
 siliconflow,deepseek-ai/DeepSeek-R1-0528-Qwen3-8B,免费模型(API实测),无固定额度(免费调用),无固定刷新周期,无,可用(实测OK 2026-08-29,思考模式耗token较多),https://api.siliconflow.cn/v1/models+API实测,2026-08-29
 zhipu,glm-4.5-flash,免费模型(API实测),可用(免费调用),无固定刷新周期,无,可用(实测OK 2026-08-29,含缓存),https://open.bigmodel.cn+API实测,2026-08-29
 zhipu,glm-4.5-air,免费资源包,已耗尽,需充值/活动,无,429余额不足不可用,https://open.bigmodel.cn+API实测,2026-08-29
-bailian,qwen系列,免费模型,账户状态异常,无,无,400 Access denied待核实账户,https://help.aliyun.com/zh/model-studio/error-code,2026-08-29
+bailian,qwen-plus/qwen-turbo/qwen-max,按量付费(已充值),充值计费,无固定刷新,无,可用(实测OK 2026-08-29),https://dashscope.aliyuncs.com+API实测,2026-08-29
+bailian,qwen3-flash,模型名不存在,404,-,-,不可用(该ID非百炼模型名,阿里为qwen-plus等),https://dashscope.aliyuncs.com+API实测,2026-08-29
