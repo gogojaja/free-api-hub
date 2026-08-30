@@ -1,0 +1,611 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/qwen2.5:7b",
+  "disabled_providers": [
+    "deepseek"
+  ],
+  "provider": {
+    "opencode": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenCode Zen",
+      "options": {
+        "baseURL": "https://opencode.ai/zen/v1",
+        "apiKey": "{file:~/.config/opencode/opencode-api-key}"
+      },
+      "whitelist": [
+        "big-pickle",
+        "deepseek-v4-flash-free",
+        "hy3-free",
+        "mimo-v2.5-free",
+        "muse-spark-1.2-contributor-free",
+        "nemotron-3-ultra-free",
+        "nemotron-3.5-lightning-free"
+      ],
+      "models": {
+        "big-pickle": {
+          "name": "(free) big-pickle",
+          "tool_call": true,
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          }
+        },
+        "deepseek-v4-flash-free": {
+          "name": "(free) deepseek-v4-flash-free",
+          "tool_call": true,
+          "limit": {
+            "context": 200000,
+            "output": 128000
+          }
+        },
+        "hy3-free": {
+          "name": "(free) hy3-free",
+          "tool_call": true,
+          "limit": {
+            "context": 190000,
+            "output": 64000
+          }
+        },
+        "mimo-v2.5-free": {
+          "name": "(free) mimo-v2.5-free",
+          "tool_call": true,
+          "limit": {
+            "context": 200000,
+            "output": 32000
+          }
+        },
+        "muse-spark-1.2-contributor-free": {
+          "name": "(free) muse-spark-1.2-contributor-free",
+          "tool_call": true,
+          "limit": {
+            "context": 1048576,
+            "output": 131072
+          }
+        },
+        "nemotron-3-ultra-free": {
+          "name": "(free) nemotron-3-ultra-free",
+          "tool_call": true,
+          "limit": {
+            "context": 1000000,
+            "output": 128000
+          }
+        },
+        "nemotron-3.5-lightning-free": {
+          "name": "(free) nemotron-3.5-lightning-free",
+          "tool_call": true,
+          "limit": {
+            "context": 262144,
+            "output": 262144
+          }
+        }
+      }
+    },
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "whitelist": [
+        "qwen2.5:7b",
+        "qwen2.5-coder:7b"
+      ],
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "qwen2.5:7b": {
+          "name": "(free) Qwen2.5 7B (local)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen2.5-coder:7b": {
+          "name": "(free) Qwen2.5 Coder 7B (local)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "zhipu": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Zhipu GLM",
+      "whitelist": [
+        "glm-4.5-flash",
+        "glm-4.7-flash",
+        "glm-5.2",
+        "glm-5.3"
+      ],
+      "options": {
+        "baseURL": "https://open.bigmodel.cn/api/paas/v4",
+        "apiKey": "{file:~/.config/opencode/zhipu-api-key}"
+      },
+      "models": {
+        "glm-4.5-flash": {
+          "name": "(recharged) GLM-4.5 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 4096
+          }
+        },
+        "glm-4.7-flash": {
+          "name": "(recharged) GLM-4.7 Flash",
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        },
+        "glm-5.2": {
+          "name": "(recharged) GLM-5.2",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "glm-5.3": {
+          "name": "(recharged) GLM-5.3",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "siliconflow": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "SiliconFlow",
+      "whitelist": [
+        "Qwen/Qwen2.5-7B-Instruct",
+        "Qwen/Qwen3-8B",
+        "deepseek-ai/DeepSeek-V3.2",
+        "deepseek-ai/DeepSeek-V4-Flash",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+      ],
+      "options": {
+        "baseURL": "https://api.siliconflow.cn/v1",
+        "apiKey": "{file:~/.config/opencode/siliconflow-api-key}"
+      },
+      "models": {
+        "Qwen/Qwen2.5-7B-Instruct": {
+          "name": "(free) Qwen2.5 7B (SiliconFlow)",
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 4096
+          }
+        },
+        "Qwen/Qwen3-8B": {
+          "name": "(free) Qwen3 8B (SiliconFlow)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "deepseek-ai/DeepSeek-V3.2": {
+          "name": "(recharged) DeepSeek V3.2 (SiliconFlow)",
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 4096
+          }
+        },
+        "deepseek-ai/DeepSeek-V4-Flash": {
+          "name": "(recharged) DeepSeek V4 Flash (SiliconFlow)",
+          "tool_call": true,
+          "limit": {
+            "context": 1000000,
+            "output": 384000
+          }
+        },
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+          "name": "(recharged) DeepSeek R1 Qwen3 8B (SiliconFlow)",
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        }
+      }
+    },
+    "bailian": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Alibaba Bailian",
+      "whitelist": [
+        "qwen-max",
+        "qwen3.8-flash",
+        "qwen3.8-max",
+        "qwen3.8-27b",
+        "qwen3.8-2.4t-a95b",
+        "qwen3.7-flash",
+        "qwen3.7-max",
+        "qwen3.7-plus",
+        "qwen3.7-max-preview",
+        "qwen3-max",
+        "qwen3-max-preview",
+        "qwen3-next-80b-a3b-instruct",
+        "qwen3.5-plus",
+        "qwen3.5-flash",
+        "qwen3.5-27b",
+        "qwen3-235b-a22b",
+        "qwen3-coder-plus",
+        "qwen3-coder-flash",
+        "qwen3-coder-next",
+        "qwen3-coder-480b-a35b-instruct",
+        "deepseek-v4-flash",
+        "deepseek-v4-pro-0813",
+        "glm-5.2",
+        "glm-5.2-fast-preview",
+        "kimi-k3"
+      ],
+      "options": {
+        "baseURL": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "apiKey": "{file:~/.config/opencode/bailian-api-key}"
+      },
+      "models": {
+        "qwen-max": {
+          "name": "Qwen Max (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.8-flash": {
+          "name": "Qwen3.8 Flash (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.8-max": {
+          "name": "Qwen3.8 Max (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.8-27b": {
+          "name": "Qwen3.8-27B (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.8-2.4t-a95b": {
+          "name": "Qwen3.8-2.4T-A95B MoE (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.7-flash": {
+          "name": "Qwen3.7 Flash (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.7-max": {
+          "name": "Qwen3.7 Max (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.7-plus": {
+          "name": "Qwen3.7 Plus (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.7-max-preview": {
+          "name": "Qwen3.7 Max Preview (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-max": {
+          "name": "Qwen3 Max (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-max-preview": {
+          "name": "Qwen3 Max Preview (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-next-80b-a3b-instruct": {
+          "name": "Qwen3-Next-80B (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.5-plus": {
+          "name": "Qwen3.5 Plus (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.5-flash": {
+          "name": "Qwen3.5 Flash (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.5-27b": {
+          "name": "Qwen3.5-27B (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-235b-a22b": {
+          "name": "Qwen3-235B-A22B (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-coder-plus": {
+          "name": "Qwen3 Coder Plus (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-coder-flash": {
+          "name": "Qwen3 Coder Flash (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-coder-next": {
+          "name": "Qwen3 Coder Next (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3-coder-480b-a35b-instruct": {
+          "name": "Qwen3 Coder 480B (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "deepseek-v4-flash": {
+          "name": "DeepSeek V4 Flash (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 1310720, "output": 4096 }
+        },
+        "deepseek-v4-pro-0813": {
+          "name": "DeepSeek V4 Pro (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 1310720, "output": 4096 }
+        },
+        "glm-5.2": {
+          "name": "GLM-5.2 (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "glm-5.2-fast-preview": {
+          "name": "GLM-5.2 Fast Preview (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "kimi-k3": {
+          "name": "Kimi-K3 (Bailian)",
+          "tool_call": true,
+          "limit": { "context": 131072, "output": 8192 }
+        }
+      }
+    },
+    "openrouter": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenRouter",
+      "whitelist": [
+        "z-ai/glm-5.2:free",
+        "qwen/qwen3.7-flash",
+        "deepseek/deepseek-v4-flash"
+      ],
+      "options": {
+        "baseURL": "https://openrouter.ai/api/v1",
+        "apiKey": "{file:~/.config/opencode/openrouter-api-key}"
+      },
+      "models": {
+        "z-ai/glm-5.2:free": {
+          "name": "(free) GLM-5.2 Free (OpenRouter)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen/qwen3.7-flash": {
+          "name": "(low) Qwen3.7 Flash ($0.01/MTok)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "deepseek/deepseek-v4-flash": {
+          "name": "(low) DeepSeek V4 Flash (OpenRouter)",
+          "tool_call": true,
+          "limit": {
+            "context": 1310720,
+            "output": 4096
+          }
+        }
+      }
+    },
+    "moonshot": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Moonshot(Kimi)",
+      "whitelist": [
+        "moonshot-v1-8k",
+        "moonshot-v1-32k",
+        "moonshot-v1-128k"
+      ],
+      "options": {
+        "baseURL": "https://api.moonshot.cn/v1",
+        "apiKey": "{file:~/.config/opencode/moonshot-api-key}"
+      },
+      "models": {
+        "moonshot-v1-8k": {
+          "name": "Moonshot-V1-8K",
+          "tool_call": true,
+          "limit": {
+            "context": 8192,
+            "output": 4096
+          }
+        },
+        "moonshot-v1-32k": {
+          "name": "Moonshot-V1-32K",
+          "tool_call": true,
+          "limit": {
+            "context": 32768,
+            "output": 4096
+          }
+        },
+        "moonshot-v1-128k": {
+          "name": "Moonshot-V1-128K",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 4096
+          }
+        }
+      }
+    },
+    "modelscope": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "ModelScope",
+      "whitelist": [
+        "deepseek-ai/DeepSeek-V4-Flash-0731",
+        "Qwen/Qwen3-8B",
+        "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "ZhipuAI/GLM-4.7-Flash"
+      ],
+      "options": {
+        "baseURL": "https://api-inference.modelscope.cn/v1",
+        "apiKey": "{file:~/.config/opencode/modelscope-api-key}"
+      },
+      "models": {
+        "deepseek-ai/DeepSeek-V4-Flash-0731": {
+          "name": "(free) DeepSeek-V4-Flash (ModelScope)",
+          "tool_call": true,
+          "limit": {
+            "context": 1000000,
+            "output": 384000
+          }
+        },
+        "Qwen/Qwen3-8B": {
+          "name": "(free) Qwen3-8B (ModelScope)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+          "name": "(free) Qwen3-Coder-30B (ModelScope)",
+          "tool_call": true,
+          "limit": {
+            "context": 262144,
+            "output": 65536
+          }
+        },
+        "ZhipuAI/GLM-4.7-Flash": {
+          "name": "(free) GLM-4.7-Flash (ModelScope)",
+          "tool_call": true,
+          "limit": {
+            "context": 204800,
+            "output": 131072
+          }
+        }
+      }
+    },
+    "free-api-hub": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Free API Hub (本地)",
+      "whitelist": [
+        "fah/chat-free",
+        "fah/light",
+        "fah/bailian",
+        "deepseek-ai/DeepSeek-V3.2",
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B",
+        "z-ai/glm-5.2:free",
+        "qwen/qwen3.7-flash",
+        "deepseek/deepseek-v4-flash"
+      ],
+      "options": {
+        "baseURL": "http://localhost:5080/v1",
+        "apiKey": "{file:~/.config/opencode/opencode-api-key}"
+      },
+      "models": {
+        "fah/chat-free": {
+          "name": "Free API Hub - 免费成本优先",
+          "tool_call": true,
+          "limit": {
+            "context": 1000000,
+            "output": 8192
+          }
+        },
+        "fah/light": {
+          "name": "Free API Hub - 轻量优先",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 4096
+          }
+        },
+        "fah/bailian": {
+          "name": "Free API Hub - 百炼优先",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "deepseek-ai/DeepSeek-V3.2": {
+          "name": "SiliconFlow DeepSeek-V3.2 (免费)",
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 4096
+          }
+        },
+        "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B": {
+          "name": "SiliconFlow DeepSeek-R1-Qwen3-8B (免费·轻量)",
+          "tool_call": true,
+          "limit": {
+            "context": 128000,
+            "output": 8192
+          }
+        },
+        "z-ai/glm-5.2:free": {
+          "name": "OpenRouter GLM-5.2 Free (限流)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "qwen/qwen3.7-flash": {
+          "name": "OpenRouter Qwen3.7-Flash (付费)",
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "deepseek/deepseek-v4-flash": {
+          "name": "OpenRouter DeepSeek-V4-Flash (付费)",
+          "tool_call": true,
+          "limit": {
+            "context": 1310720,
+            "output": 4096
+          }
+        }
+      }
+    }
+  },
+  "skills": {
+    "paths": [
+      "/Volumes/BR256G/DevProjectTeamSkill/.trae/skills"
+    ]
+  },
+  "mcp": {
+    "dev-project-team-skill": {
+      "type": "local",
+      "command": [
+        "/Volumes/BR256G/DevProjectTeamSkill/.venv/bin/python3",
+        "/Volumes/BR256G/DevProjectTeamSkill/tools/mcp_server/skills_mcp_server.py"
+      ],
+      "enabled": true,
+      "environment": {
+        "START_MCP_TIMEOUT_MS": "60000",
+        "RUN_MCP_TIMEOUT_MS": "300000"
+      }
+    }
+  }
+}
