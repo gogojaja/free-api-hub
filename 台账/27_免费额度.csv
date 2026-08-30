@@ -1,7 +1,7 @@
 ﻿平台,模型,额度类型,额度量,刷新周期,刷新时间,当前状态,来源T1,核验日期
 openrouter,deepseek/qwen系列,免费额度,0(=无免费档),永久,无,不可用,https://openrouter.ai/api/v1/models,2026-08-29
 zhipu,glm-4.5-air,免费资源包,已耗尽,需充值/活动,无,429余额不足不可用,https://open.bigmodel.cn+API实测,2026-08-29
-bailian,qwen-plus/qwen-turbo/qwen-max,按量付费(已充值),充值计费,无固定刷新,无,可用(实测OK 2026-08-29),https://dashscope.aliyuncs.com+API实测,2026-08-29
+bailian,qwen-plus/qwen-turbo/qwen-max,免费额度(控制台已全部开启)+按量(已充值),按模型免费额度赠送(控制台核实),以控制台为准,以控制台为准,可用(控制台确认所有免费额度已开启 2026-08-30),阿里云百炼控制台(用户核实),2026-08-30
 bailian,qwen3-flash,模型名不存在,404,-,-,不可用(该ID非百炼模型名,阿里为qwen-plus等),https://dashscope.aliyuncs.com+API实测,2026-08-29
 siliconflow,deepseek-ai/DeepSeek-V3.2,免费/按量,,,,ok: 可用(prompt=5),https://api.siliconflow.cn/v1/chat/completions,2026-08-29
 siliconflow,deepseek-ai/DeepSeek-V3.2-Exp,免费/按量,,,,ok: 可用(prompt=5),https://api.siliconflow.cn/v1/chat/completions,2026-08-29
