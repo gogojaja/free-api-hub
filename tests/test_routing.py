@@ -97,6 +97,71 @@ class TestRouter(unittest.TestCase):
         out = r.resolve("fah/chat", self.available)
         self.assertEqual([p["name"] for p in out], ["p2"])  # override 优先于 alias
 
+    def test_cost_strategy_lowest_first(self):
+        ps = [
+            {"name": "paid", "model": "m1", "priority": 1, "cost_per_mtok": 0.03,
+             "capabilities": {"tags": ["chat"]}},
+            {"name": "free", "model": "m2", "priority": 2, "cost_per_mtok": 0,
+             "capabilities": {"tags": ["chat"]}},
+            {"name": "mid", "model": "m3", "priority": 3, "cost_per_mtok": 0.1,
+             "capabilities": {"tags": ["chat"]}},
+        ]
+        routing_cfg = {
+            "enabled": True,
+            "default_strategy": "cost",
+            "aliases": [{"name": "fah/cost", "tags": ["chat"], "strategy": "cost"}],
+        }
+        r = Router(routing_cfg, ps)
+        out = r.resolve("fah/cost", ps)
+        self.assertEqual([p["name"] for p in out], ["free", "paid", "mid"])  # 成本升序
+
+    def test_cost_unknown_falls_back_to_full(self):
+        r = Router({**ROUTING, "default_strategy": "cost"}, PROVIDERS)
+        out = r.resolve("nope", self.available)
+        # 非 alias 模型 + 无 override → 现状全池（cost 仅在 alias 命中时驱动）
+        self.assertEqual([p["name"] for p in out], ["p1", "p2", "p3"])
+
+    def test_schedule_offpeak_boost(self):
+        ps = [
+            {"name": "boostme", "model": "m1", "priority": 5,
+             "capabilities": {"tags": ["chat"]}},
+            {"name": "prio1", "model": "m2", "priority": 1,
+             "capabilities": {"tags": ["chat"]}},
+        ]
+        routing_cfg = {
+            "enabled": True,
+            "schedule_enabled": True,
+            "schedule": {"windows": [
+                {"name": "offpeak", "hours": "18-23,0-8", "boost": ["boostme"],
+                 "default_order": ["prio1", "boostme"]}]},
+            "aliases": [{"name": "fah/schedule", "tags": ["chat"], "strategy": "schedule"}],
+        }
+        r = Router(routing_cfg, ps)
+        out = r.resolve("fah/schedule", ps, ctx={"local_hour": 22})   # 命中夜间
+        self.assertEqual([p["name"] for p in out], ["boostme", "prio1"])
+        out2 = r.resolve("fah/schedule", ps, ctx={"local_hour": 10})  # 未命中
+        self.assertEqual([p["name"] for p in out2], ["prio1", "boostme"])  # priority 原序
+
+    def test_schedule_cross_midnight(self):
+        ps = [
+            {"name": "boostme", "model": "m1", "priority": 5,
+             "capabilities": {"tags": ["chat"]}},
+            {"name": "prio1", "model": "m2", "priority": 1,
+             "capabilities": {"tags": ["chat"]}},
+        ]
+        routing_cfg = {
+            "enabled": True,
+            "schedule_enabled": True,
+            "schedule": {"windows": [
+                {"name": "night", "hours": "22-6", "boost": ["boostme"]}]},
+            "aliases": [{"name": "fah/schedule", "tags": ["chat"], "strategy": "schedule"}],
+        }
+        r = Router(routing_cfg, ps)
+        out = r.resolve("fah/schedule", ps, ctx={"local_hour": 2})    # 跨天命中（22-6 含 2 点）
+        self.assertEqual([p["name"] for p in out], ["boostme", "prio1"])
+        out2 = r.resolve("fah/schedule", ps, ctx={"local_hour": 12})  # 未命中
+        self.assertEqual([p["name"] for p in out2], ["prio1", "boostme"])
+
 
 class TestGatewayRouting(unittest.TestCase):
     def setUp(self):

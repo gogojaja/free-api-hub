@@ -1,0 +1,3 @@
+﻿同步编号,同步时间,源commit,目标remote,远程URL(脱敏),状态,耗时秒,说明
+SYNC-20260831-001,2026-08-31 00:40:59,af7a7a6932e1,origin,,跳过(未配置),0.0,remote 未配置，待用户在 Gitee 建仓后 git remote add mirror
+SYNC-20260831-002,2026-08-31 00:40:59,af7a7a6932e1,mirror,,跳过(未配置),0.0,remote 未配置，待用户在 Gitee 建仓后 git remote add mirror

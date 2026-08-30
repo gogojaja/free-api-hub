@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Router:
     """按 alias 标签筛选候选池，并按策略（priority/capability/latency）排序。"""
 
-    VALID_STRATEGIES = ("priority", "capability", "latency")
+    VALID_STRATEGIES = ("priority", "capability", "latency", "cost", "schedule")
 
     def __init__(self, routing_cfg, providers):
         routing_cfg = routing_cfg or {}
@@ -54,6 +54,10 @@ class Router:
                 logger.warning(f"alias {an!r} 标签 {a['tags']} 无 provider 匹配，将退化为全池")
 
         self._latency = {}  # name -> EWMA 秒
+
+        # ADR-011 二期：schedule 时段调度表（可选非破坏）
+        self.schedule = routing_cfg.get("schedule") or {}
+        self.schedule_enabled = bool(routing_cfg.get("schedule_enabled", True))
 
     def _resolve_manual_override(self, available):
         """ADR-010：manual_override 钉死单 provider（> alias > priority）。
@@ -133,8 +137,76 @@ class Router:
             return available
         return self.select(pool, alias["strategy"], ctx)
 
+    def _schedule_order(self, pool, ctx=None):
+        """ADR-011 二期：schedule 时段调度表（非破坏叠加）。
+
+        routing.schedule 结构（示例）:
+          schedule:
+            enabled: true
+            windows:
+              - name: deepseek-offpeak
+                hours: "18-23,0-8"   # 命中时段（北京时区本地小时）
+                boost:
+                  - openrouter        # 该时段优先生效的 provider（如非高峰半价）
+                default_order: [zhipu, siliconflow, bailian]  # 可选：非命中/其余顺序
+        命中窗口 → boost 池前置，其余按 default_order/priority 补齐；
+        未命中 → 按第一个 window 的 default_order 或 priority 排序。
+        """
+        if not self.schedule_enabled or not self.schedule:
+            return pool
+        local_hour = (ctx or {}).get("local_hour")
+        if local_hour is None:
+            import datetime
+            local_hour = datetime.datetime.now().hour
+        boost = set()
+        fallback_order = None
+        hit_any = False
+        for w in self.schedule.get("windows", []) or []:
+            hours = (w.get("hours") or "").split(",")
+            hit = False
+            for h in hours:
+                h = h.strip()
+                if "-" in h:
+                    a, b = h.split("-")
+                    if int(a) <= int(b):
+                        hit = int(a) <= local_hour <= int(b)
+                    else:  # 跨天 e.g. 18-8
+                        hit = int(a) <= local_hour or local_hour <= int(b)
+                elif h and int(h) == local_hour:
+                    hit = True
+                if hit:
+                    break
+            if hit:
+                hit_any = True
+                boost.update(w.get("boost", []) or [])
+                if w.get("default_order"):
+                    fallback_order = w["default_order"]
+            elif fallback_order is None and w.get("default_order"):
+                # 记录第一个 window 的 default_order 作为未命中时的兜底
+                fallback_order = w["default_order"]
+        if not boost:
+            # 未命中任何窗口：按 fallback_order 或 priority 排序
+            if fallback_order:
+                rank = {n: i for i, n in enumerate(fallback_order)}
+                return sorted(pool, key=lambda p: rank.get(p["name"], 999))
+            return sorted(pool, key=lambda p: p.get("priority", 99))
+        boosted = [p for p in pool if p["name"] in boost]
+        rest = [p for p in pool if p["name"] not in boost]
+        if fallback_order:
+            rank = {n: i for i, n in enumerate(fallback_order)}
+            rest.sort(key=lambda p: rank.get(p["name"], 999))
+        else:
+            rest.sort(key=lambda p: p.get("priority", 99))
+        return boosted + rest
+
     def select(self, pool, strategy, ctx=None):
         ctx = ctx or {}
+        if strategy == "cost":
+            return sorted(pool, key=lambda p: float(p.get("cost_per_mtok", 999)))
+
+        if strategy == "schedule":
+            return self._schedule_order(pool, ctx)
+
         if strategy == "latency":
             return sorted(pool, key=lambda p: self._latency.get(p["name"], 1e9))
         if strategy == "capability":

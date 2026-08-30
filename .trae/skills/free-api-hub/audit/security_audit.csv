@@ -4,4 +4,6 @@ timestamp,action,provider,result,detail
 2026-08-28T03:56:11Z,register_provider,moonshot,ok,登记 月之暗面Kimi 免费API: baseURL=https://api.moonshot.cn/v1, models=moonshot-v1-8k/32k/128k
 2026-08-28T03:56:11Z,set_api_key,moonshot,ok,写入 moonshot-api-key(0600), 明文不回显
 2026-08-28T06:10:28Z,set_api_key,moonshot,ok,"更新有效key并验证 api.moonshot.cn/v1 -> HTTP 200 (明文不回显, 文件0600)"
-2026-08-28T16:37:31Z,update_config,all,"按官方API上下文修正 10 模型 limit（ctx/out）；备份 .bak.20260829_context"
+2026-08-28T16:37:31Z,update_config,all,"按官方API上下文修正 10 模型 limit（ctx/out）；备份 .bak.20260829_context"2026-08-30T08:59:31Z,set_api_key,siliconflow,ok,/Users/gogo/.config/opencode/siliconflow-api-key
+2026-08-30T08:59:54Z,set_api_key,zhipu,ok,/Users/gogo/.config/opencode/zhipu-api-key
+2026-08-30T11:58:06Z,set_api_key,bailian,ok,/Users/gogo/.config/opencode/bailian-api-key
