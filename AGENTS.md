@@ -6,7 +6,7 @@
 
 ## 1. 项目环境约束
 
-- workspace：`/Volumes/KINGSTON120G/free-api-hub`
+- workspace：`/Volumes/BR256G/free-api-hub`（历史文档写 KINGSTON120G 为漂移，以 BR256G 为准）
 - 端口：chat :5080 / code :5081；禁止操作 5001/5002/5003
 - 全库禁新 `.xlsx`；≥4K token 表格输出 CSV（UTF-8 BOM）；脚本一律 python3
 - 干系人：段波（IP 所有人）；成本 <20 人*日（预警 16）
@@ -28,6 +28,7 @@
 - 方案选型优先级：安全 > 稳定 > 成熟 > 便捷；优先 LTS、最小权限、拒绝实验工具
 - 新会话接收交接文档后静待指令，不擅自操作
 - 每轮回复末尾标注：**▶️ 下一步：** <可执行的后续操作>
+- **每周监测例行**：新会话处理完当轮任务后，若距上次 `model_monitor.py --write` 运行 ≥7 天，则提示用户执行每周监测（价格→台账24/优惠→26/免费额度核验→27）并给出额度/促销变更摘要；会话中也可主动运行 `python3 scripts/model_monitor.py --write`
 
 ## 4. 会话复盘经验（持续积累）
 
