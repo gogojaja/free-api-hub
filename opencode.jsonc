@@ -15,5 +15,54 @@
         "RUN_MCP_TIMEOUT_MS": "300000"
       }
     }
+  },
+  "models": {
+    "free-api-hub": {
+      "name": "Free API Hub",
+      "models": [
+        {
+          "id": "zhipu",
+          "name": "(free) 智谱 GLM-4.5-Flash",
+          "provider": "zhipu",
+          "model": "GLM-4.5-Flash"
+        },
+        {
+          "id": "zhipu-47",
+          "name": "(free) 智谱 GLM-4.7-Flash",
+          "provider": "zhipu-47",
+          "model": "GLM-4.7-Flash"
+        },
+        {
+          "id": "zhipu-52",
+          "name": "(free) 智谱 GLM-5.2",
+          "provider": "zhipu-52",
+          "model": "GLM-5.2"
+        },
+        {
+          "id": "zhipu-53",
+          "name": "(free) 智谱 GLM-5.3",
+          "provider": "zhipu-53",
+          "model": "GLM-5.3"
+        },
+        {
+          "id": "siliconflow-qwen25",
+          "name": "(free) SiliconFlow Qwen2.5-7B",
+          "provider": "siliconflow-qwen25",
+          "model": "Qwen/Qwen2.5-7B-Instruct"
+        },
+        {
+          "id": "siliconflow-qwen3",
+          "name": "(free) SiliconFlow Qwen3-8B",
+          "provider": "siliconflow-qwen3",
+          "model": "Qwen/Qwen3-8B"
+        },
+        {
+          "id": "openrouter-glm52",
+          "name": "(free) OpenRouter GLM-5.2",
+          "provider": "openrouter-glm52",
+          "model": "zhipu/glm-5.2"
+        }
+      ]
+    }
   }
 }

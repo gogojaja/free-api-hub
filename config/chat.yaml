@@ -10,18 +10,22 @@ gateway:
     hide_raw: false
     manual_override: ''
     aliases:
-    - name: fah/bailian
-      tags:
-      - bailian
-      strategy: cost
     - name: fah/chat-free
       tags:
-      - chat
-      strategy: cost
+      - free
+      strategy: priority
+    - name: fah/chat-cheap
+      tags:
+      - cheap
+      strategy: priority
+    - name: fah/bailian
+      tags:
+      - paid-as-you-go
+      strategy: priority
     - name: fah/light
       tags:
       - lightweight
-      strategy: priority
+      strategy: latency
     schedule_enabled: false
     schedule:
       windows:
@@ -48,6 +52,7 @@ providers:
     output_limit: 4096
     supports_tools: true
     tags:
+    - free
     - chat
 - name: zhipu-47
   display: 智谱 GLM-4.7-Flash (免费)
@@ -61,6 +66,7 @@ providers:
     output_limit: 131072
     supports_tools: true
     tags:
+    - free
     - chat
 - name: zhipu-52
   display: 智谱 GLM-5.2 (免费)
@@ -74,6 +80,7 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
+    - free
     - chat
 - name: zhipu-53
   display: 智谱 GLM-5.3 (免费)
@@ -87,6 +94,7 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
+    - free
     - chat
 - name: siliconflow
   display: SiliconFlow DeepSeek-V3.2 (收费)
@@ -100,8 +108,9 @@ providers:
     output_limit: 4096
     supports_tools: true
     tags:
-    - chat
+    - cheap
     - lightweight
+    - chat
 - name: siliconflow-v4
   display: SiliconFlow DeepSeek-V4-Flash (收费)
   endpoint: https://api.siliconflow.cn/v1
@@ -114,6 +123,7 @@ providers:
     output_limit: 384000
     supports_tools: true
     tags:
+    - cheap
     - chat
 - name: siliconflow-qwen25
   display: SiliconFlow Qwen2.5-7B (免费)
@@ -127,8 +137,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - free
     - lightweight
+    - chat
 - name: siliconflow-qwen3
   display: SiliconFlow Qwen3-8B (免费)
   endpoint: https://api.siliconflow.cn/v1
@@ -141,8 +152,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - free
     - lightweight
+    - chat
 - name: siliconflow-r1
   display: SiliconFlow DeepSeek-R1-Qwen3-8B (收费·轻量)
   endpoint: https://api.siliconflow.cn/v1
@@ -155,8 +167,9 @@ providers:
     output_limit: 8192
     supports_tools: false
     tags:
-    - chat
+    - cheap
     - lightweight
+    - chat
 - name: bailian-max
   display: 百炼 Qwen-Max (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -169,8 +182,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-38-flash
   display: 百炼 Qwen3.8-Flash (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -183,9 +197,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - lightweight
     - bailian
+    - chat
 - name: bailian-38-max
   display: 百炼 Qwen3.8-Max (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -198,8 +213,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-37-flash
   display: 百炼 Qwen3.7-Flash (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -212,9 +228,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - lightweight
     - bailian
+    - chat
 - name: bailian-3-max
   display: 百炼 Qwen3-Max (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -227,8 +244,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-ds-v4
   display: 百炼 DeepSeek-V4-Flash (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -241,8 +259,9 @@ providers:
     output_limit: 4096
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-coder-plus
   display: 百炼 Qwen3-Coder-Plus (充值·代码)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -255,9 +274,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
+    - paid-as-you-go
     - code
+    - bailian
+    - chat
 - name: bailian-coder-flash
   display: 百炼 Qwen3-Coder-Flash (充值·代码轻量)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -270,9 +290,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
     - code
+    - paid-as-you-go
+    - bailian
+    - chat
     - lightweight
 - name: bailian-coder-next
   display: 百炼 Qwen3-Coder-Next (充值·代码前沿)
@@ -286,9 +307,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
+    - paid-as-you-go
     - code
+    - bailian
+    - chat
 - name: bailian-coder-480b
   display: 百炼 Qwen3-Coder-480B (充值·代码大参数)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -301,9 +323,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
+    - paid-as-you-go
     - code
+    - bailian
+    - chat
 - name: bailian-37-max
   display: 百炼 Qwen3.7-Max (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -316,8 +339,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-37-plus
   display: 百炼 Qwen3.7-Plus (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -330,8 +354,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-37-max-pv
   display: 百炼 Qwen3.7-Max-Preview (充值·预览)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -344,8 +369,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-38-27b
   display: 百炼 Qwen3.8-27B (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -358,8 +384,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-38-a95b
   display: 百炼 Qwen3.8-2.4T-A95B (充值·大参数MoE)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -372,8 +399,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-35-plus
   display: 百炼 Qwen3.5-Plus (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -386,8 +414,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-35-flash
   display: 百炼 Qwen3.5-Flash (充值·轻量)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -400,9 +429,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
+    - paid-as-you-go
     - lightweight
+    - bailian
+    - chat
 - name: bailian-35-27b
   display: 百炼 Qwen3.5-27B (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -415,8 +445,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-235b
   display: 百炼 Qwen3-235B-A22B (充值·大参数)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -429,8 +460,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-3-max-pv
   display: 百炼 Qwen3-Max-Preview (充值·预览)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -443,8 +475,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-next-80b
   display: 百炼 Qwen3-Next-80B (充值·前沿)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -457,8 +490,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-glm52
   display: 百炼 GLM-5.2 (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -471,8 +505,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-glm52-fast
   display: 百炼 GLM-5.2-Fast-Preview (充值·快速)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -485,9 +520,10 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
-    - bailian
+    - paid-as-you-go
     - lightweight
+    - bailian
+    - chat
 - name: bailian-kimi-k3
   display: 百炼 Kimi-K3 (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -500,8 +536,9 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: bailian-ds-v4-pro
   display: 百炼 DeepSeek-V4-Pro (充值)
   endpoint: https://dashscope.aliyuncs.com/compatible-mode/v1
@@ -514,8 +551,9 @@ providers:
     output_limit: 4096
     supports_tools: true
     tags:
-    - chat
+    - paid-as-you-go
     - bailian
+    - chat
 - name: openrouter
   display: OpenRouter DeepSeek V4-Flash (低价兜底)
   endpoint: https://openrouter.ai/api/v1
@@ -528,6 +566,7 @@ providers:
     output_limit: 4096
     supports_tools: true
     tags:
+    - cheap
     - chat
   headers:
     HTTP-Referer: http://localhost:5080
@@ -544,6 +583,7 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
+    - cheap
     - chat
   headers:
     HTTP-Referer: http://localhost:5080
@@ -560,7 +600,100 @@ providers:
     output_limit: 8192
     supports_tools: true
     tags:
+    - free
     - chat
   headers:
     HTTP-Referer: http://localhost:5080
     X-Title: Free-API-Hub
+
+- name: longcat-free
+  display: 美团 LongCat-2.0 (付费套餐)
+  endpoint: https://api.longcat.chat/openai
+  model: LongCat-2.0
+  api_key: ${LONGCAT_API_KEY}
+  cost_per_mtok: 0
+  priority: 5
+  capabilities:
+    context_window: 1000000
+    output_limit: 128000
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
+
+- name: xiaomi-mimo
+  display: 小米 MiMo-V2.5-Pro (付费套餐)
+  endpoint: https://api.xiaomimimo.com/v1
+  model: mimo-v2.5-pro
+  api_key: ${MIMO_API_KEY}
+  cost_per_mtok: 0.003
+  priority: 20
+  capabilities:
+    context_window: 1000000
+    output_limit: 8192
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
+
+- name: xiaomi-mimo-std
+  display: 小米 MiMo-V2.5 (付费套餐·轻量)
+  endpoint: https://api.xiaomimimo.com/v1
+  model: mimo-v2.5
+  api_key: ${MIMO_API_KEY}
+  cost_per_mtok: 0.001
+  priority: 15
+  capabilities:
+    context_window: 512000
+    output_limit: 4096
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
+    - lightweight
+
+- name: tencent-hy3
+  display: 腾讯 Hy3 (256K上下文)
+  endpoint: https://tokenhub.tencentmaas.com/v1
+  model: hy3-preview
+  api_key: ${TENCENT_API_KEY}
+  cost_per_mtok: 0.005
+  priority: 10
+  capabilities:
+    context_window: 256000
+    output_limit: 128000
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
+
+- name: tencent-dsv4
+  display: 腾讯 DeepSeek-V4-Flash (低价)
+  endpoint: https://tokenhub.tencentmaas.com/v1
+  model: deepseek-v4-flash
+  api_key: ${TENCENT_API_KEY}
+  cost_per_mtok: 0.001
+  priority: 5
+  capabilities:
+    context_window: 128000
+    output_limit: 8192
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
+    - lightweight
+
+- name: tencent-glm53
+  display: 腾讯 GLM-5.3-Flash (多模态)
+  endpoint: https://tokenhub.tencentmaas.com/v1
+  model: glm-5.3-flash
+  api_key: ${TENCENT_API_KEY}
+  cost_per_mtok: 0.001
+  priority: 10
+  capabilities:
+    context_window: 256000
+    output_limit: 4096
+    supports_tools: true
+    tags:
+    - cheap
+    - chat
