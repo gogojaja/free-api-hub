@@ -4,41 +4,6 @@ gateway:
   failure_threshold: 3
   timeout: 30
   log: data/chat.log
-  routing:
-    enabled: true
-    default_strategy: cost
-    hide_raw: false
-    manual_override: ''
-    aliases:
-    - name: fah/chat-free
-      tags:
-      - free
-      strategy: priority
-    - name: fah/chat-cheap
-      tags:
-      - cheap
-      strategy: priority
-    - name: fah/bailian
-      tags:
-      - paid-as-you-go
-      strategy: priority
-    - name: fah/light
-      tags:
-      - lightweight
-      strategy: latency
-    schedule_enabled: false
-    schedule:
-      windows:
-      - name: deepseek-offpeak-beijing-nights
-        hours: 18-23,0-8
-        boost:
-        - openrouter
-        default_order:
-        - siliconflow
-        - bailian
-        - zhipu
-        - siliconflow-r1
-        - openrouter
 providers:
 - name: zhipu
   display: 智谱 GLM-4.5-Flash (免费)

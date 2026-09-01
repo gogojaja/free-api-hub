@@ -3,22 +3,10 @@
 
 gateway:
   port: 5081
-  retry_seconds: 5        # 熔断器 OPEN→HALF_OPEN 恢复超时(秒)
-  failure_threshold: 3    # 连续失败次数阈值，达到后熔断
+  retry_seconds: 5
+  failure_threshold: 3
   timeout: 15
   log: data/code.log
-  # 智能路由（ADR-008/009）：叠加式，不影响既有 failover；hide_raw=false 保留裸模型名
-  routing:
-    enabled: true
-    default_strategy: priority
-    hide_raw: false
-    # ADR-010 manual_override：钉死单 provider（provider名/裸模型ID/alias名），空=不启用
-    manual_override: ""              # 例：code.yaml 手动指定 DeepSeek 时填 "openrouter"
-    aliases:
-      - name: fah/code-x
-        tags: [code]
-        strategy: capability
-
 providers:
   - name: deepseek-code
     display: DeepSeek V4 Flash
